@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
+// import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Container, Row } from "reactstrap";
 import { getNotification } from "../features/userApis";
@@ -30,21 +30,22 @@ const FullLayout = () => {
     };
   }, []);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  // const toggleSidebar = () => {
+  //   setIsSidebarOpen((prev) => !prev);
+  // };
 
   return (
     <>
-      <div className={`full-layout ${isSidebarOpen ? "sidebar-open" : ""}`}>
+      <div className={`full-layout  ${isSidebarOpen ? "sidebar-open" : ""}`}> 
+      
         <Header
           notifications={notifications}
           count={count}
-          toggleSidebar={toggleSidebar}
+          // toggleSidebar={toggleSidebar}
         />
         <Container fluid>
           <Row className="top">
-            <Sidebar isOpen={isSidebarOpen} />
+            {/* <Sidebar isOpen={isSidebarOpen} /> */}
             <div className="main-content">
               <Outlet />
             </div>
