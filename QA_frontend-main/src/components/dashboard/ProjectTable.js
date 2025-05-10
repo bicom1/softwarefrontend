@@ -67,13 +67,22 @@ const ProjectTables = () => {
     getallUsers(true); // Force refresh
   };
 
-  useEffect(() => {
-    const storedDeletedIDs = localStorage.getItem("deletedUserIDs"); // Fixed key
-    if (storedDeletedIDs) {
-      setDeletedUserIDs(JSON.parse(storedDeletedIDs));
-    }
+  // Load deletedUserIDs once
+useEffect(() => {
+  const storedDeletedIDs = localStorage.getItem("deletedUserIDs");
+  if (storedDeletedIDs) {
+    setDeletedUserIDs(JSON.parse(storedDeletedIDs));
+  }
+}, []); // <-- only runs once on mount
+
+// Load user data after deletedUserIDs is set
+useEffect(() => {
+  if (deletedUserIDs.length >= 0) {
     getallUsers();
-  }, [getallUsers]);
+  }
+}, [getallUsers, deletedUserIDs]);
+
+  
 
   const handleDeleteUser = async (id) => {
     const confirmed = window.confirm(

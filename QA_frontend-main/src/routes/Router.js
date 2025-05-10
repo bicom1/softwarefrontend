@@ -1,8 +1,6 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Auth from "../Auth.js";
-import { element } from "prop-types";
-// import { element } from "prop-types";
 
 const FullLayout = lazy(() => import("../layouts/FullLayout.js"));
 const Login = lazy(() => import("../layouts/Login.js"));
@@ -19,6 +17,7 @@ const AllEscalations = lazy(() =>
 const EscalationDetails = lazy(() =>
   import("../components/dashboard/EscalationDetails.jsx")
 );
+
 const ThemeRoutes = [
   {
     path: "/bi",
@@ -74,7 +73,6 @@ const ThemeRoutes = [
           </Auth>
         ),
       },
-
       {
         path: "/bi/agentReport/:name",
         exact: true,
@@ -92,7 +90,6 @@ const ThemeRoutes = [
         element: (
           <Auth>
             <ViewUserAllData />
-            {/* <UserData /> */}
           </Auth>
         ),
       },
@@ -106,7 +103,6 @@ const ThemeRoutes = [
       },
     ],
   },
-
   {
     path: "/",
     element: <Login />,
