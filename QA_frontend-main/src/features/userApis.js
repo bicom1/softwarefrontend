@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "universal-cookie";
 const cookie = new Cookies();
-// const baseUrl = "https://backendbic.onrender.com";
+
 const baseUrl = "https://backendbic-rrrm.onrender.com";
 // const baseUrl = "http://localhost:8000";
 
