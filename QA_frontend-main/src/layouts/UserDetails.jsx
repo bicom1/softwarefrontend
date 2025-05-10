@@ -1,21 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
 import ReactApexChart from "react-apexcharts";
 import { useNavigate, useParams } from "react-router-dom";
-import {fetchuserbyid } from "../features/userApis";
+import { fetchuserbyid } from "../features/userApis";
 import { Button } from "reactstrap";
 import Loader from "./loader/Loader";
-
-
-
 
 const UserDetails = () => {
   const param = useParams();
   const navigate = useNavigate();
- 
   const [userDetails, setUserDetails] = useState([]);
- 
   const [isLoading, setIsLoading] = useState(false);
- 
 
   const getUser = useCallback(async () => {
     setIsLoading(true);
@@ -37,13 +31,10 @@ const UserDetails = () => {
     getUser();
   }, [getUser]);
 
-
   const [options, setOptions] = useState({
-    series: [
-      {
-        name: "Ratings",
-      },
-    ],
+    series: [{
+      name: "Ratings",
+    }],
     options: {
       chart: {
         height: 350,
@@ -76,7 +67,7 @@ const UserDetails = () => {
     },
   });
 
-  const [usergraph, setUserGraph] = useState({
+  const [userGraph] = useState({
     series: [
       Number(userDetails?.counts?.good),
       Number(userDetails?.counts?.average),
@@ -118,11 +109,9 @@ const UserDetails = () => {
 
       setOptions((pre) => ({
         ...pre,
-        series: [
-          {
-            data: userRatings,
-          },
-        ],
+        series: [{
+          data: userRatings,
+        }],
         options: {
           ...pre.options,
           xaxis: {
@@ -136,13 +125,9 @@ const UserDetails = () => {
     }
   }, [userDetails]);
 
- 
-
   const handlerViewData = (name) => {
     navigate(`/bi/data/${param.id}/${name}`);
   };
-
-
 
   return (
     <div
@@ -164,8 +149,8 @@ const UserDetails = () => {
           </div>
           <div className="rounded" style={{ backgroundColor: "#fff" }}>
             <ReactApexChart
-              options={usergraph?.options}
-              series={usergraph?.series}
+              options={userGraph?.options}
+              series={userGraph?.series}
               type="radialBar"
               height={350}
             />
