@@ -123,6 +123,6 @@ body {
   transition: filter 0.3s ease-in-out !important;
 }
 
-.full-layout.sidebar-open .main-content {
+/* .full-layout.sidebar-open .main-content {
   filter: blur(5px) !important;
-}
+} */
