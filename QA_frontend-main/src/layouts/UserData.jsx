@@ -155,7 +155,7 @@ const UserData = () => {
                           <th>Presenting Solutions</th>
                           <th>Call Closing</th>
                           <th>Bonus Point</th>
-                          {/* <th>evaluationpoints</th> */}
+                          
                           <th>Evaluation Summary</th>
                         </tr>
                       </thead>
@@ -177,18 +177,7 @@ const UserData = () => {
                             <td>{val?.closing}</td>
                             <td>{val?.bonus}</td>
                             <td>{val?.evaluationsummary}</td>
-                            {/* <td>
-  {val?.evaluationpoints?.length > 0 ? (
-    val.evaluationpoints.map((point, i) => (
-      <span key={i}>
-        {point}
-        <br /> 
-      </span>
-    ))
-  ) : (
-    "N/A"
-  )}
-</td> */}
+                
                           </tr>
                         ))}
                       </tbody>
