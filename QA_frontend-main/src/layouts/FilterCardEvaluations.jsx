@@ -157,8 +157,8 @@ const FilterCardEvaluations = () => {
   </div>
 
   <div className="row g-3">
-    {/* Date Pickers */}
-    <div className="col-12 col-md-6">
+    
+    <div className="">
       <label htmlFor="startDate" className="form-label">
         Start Date
       </label>
@@ -174,7 +174,7 @@ const FilterCardEvaluations = () => {
       />
     </div>
     
-    <div className="col-12 col-md-6">
+    <div className="">
       <label htmlFor="endDate" className="form-label">
         End Date
       </label>
@@ -191,8 +191,8 @@ const FilterCardEvaluations = () => {
       />
     </div>
 
-    {/* Agent and Team Lead Fields */}
-    <div className="col-12 col-md-6">
+    
+    <div className="">
       <label htmlFor="agentName" className="form-label">
         Agent Name
       </label>
@@ -207,7 +207,7 @@ const FilterCardEvaluations = () => {
       />
     </div>
     
-    <div className="col-12 col-md-6">
+    <div className="">
       <label htmlFor="teamLeader" className="form-label">
         Team Lead
       </label>
@@ -223,7 +223,6 @@ const FilterCardEvaluations = () => {
     </div>
   </div>
 
-  {/* Buttons - Responsive Layout */}
   <div className="d-flex flex-column flex-sm-row justify-content-center gap-3 gap-sm-5 mt-4">
     <button
       className="btn btn-primary flex-grow-1 flex-sm-grow-0"

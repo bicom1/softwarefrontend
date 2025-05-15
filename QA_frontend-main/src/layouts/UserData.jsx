@@ -27,7 +27,7 @@ const UserData = () => {
 
   useEffect(() => {
     const getUserData = async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true); 
       try {
         const { data } = await summonUserData(id);
         // console.log(data);
@@ -57,7 +57,7 @@ const UserData = () => {
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
-        setIsLoading(false); // Stop loading
+        setIsLoading(false); 
       }
     };
 
@@ -272,39 +272,90 @@ const UserData = () => {
   );
 };
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => (
-  <nav>
-    <ul className="pagination justify-content-center">
-      <li className={`page-item ${currentPage === 1 ? " disabled" : ""}`}>
-        <button
-          className="page-link"
-          onClick={() => onPageChange(currentPage - 1)}
-        >
-          Previous
-        </button>
-      </li>
-      {Array.from({ length: totalPages }, (_, i) => (
-        <li
-          key={i}
-          className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
-        >
-          <button className="page-link" onClick={() => onPageChange(i + 1)}>
-            {i + 1}
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const getVisiblePages = () => {
+    const visiblePages = [];
+    const windowSize = 2;
+    
+    let start = Math.max(1, currentPage - windowSize);
+    let end = Math.min(totalPages, currentPage + windowSize);
+
+    if (currentPage <= windowSize + 1) {
+      end = Math.min(2 * windowSize + 1, totalPages);
+    }
+    if (currentPage >= totalPages - windowSize) {
+      start = Math.max(1, totalPages - 2 * windowSize);
+    }
+
+    if (start > 1) {
+      visiblePages.push(1);
+      if (start > 2) {
+        visiblePages.push('...');
+      }
+    }
+
+    for (let i = start; i <= end; i++) {
+      visiblePages.push(i);
+    }
+
+    if (end < totalPages) {
+      if (end < totalPages - 1) {
+        visiblePages.push('...');
+      }
+      visiblePages.push(totalPages);
+    }
+
+    return visiblePages;
+  };
+
+  const visiblePages = getVisiblePages();
+
+  return (
+    <nav aria-label="Page navigation">
+      <ul className="pagination justify-content-center flex-wrap">
+        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+          <button
+            className="page-link"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            aria-label="Previous"
+          >
+            &laquo; Previous
           </button>
         </li>
-      ))}
-      <li
-        className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
-      >
-        <button
-          className="page-link"
-          onClick={() => onPageChange(currentPage + 1)}
-        >
-          Next
-        </button>
-      </li>
-    </ul>
-  </nav>
-);
+        
+        {visiblePages.map((page, index) => (
+          <li 
+            key={index}
+            className={`page-item ${page === '...' ? 'disabled' : ''} ${currentPage === page ? 'active' : ''}`}
+          >
+            {page === '...' ? (
+              <span className="page-link">...</span>
+            ) : (
+              <button 
+                className="page-link" 
+                onClick={() => onPageChange(page)}
+                aria-current={currentPage === page ? 'page' : undefined}
+              >
+                {page}
+              </button>
+            )}
+          </li>
+        ))}
+        
+        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+          <button
+            className="page-link"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            aria-label="Next"
+          >
+            Next &raquo;
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+};
 
 export default UserData;
