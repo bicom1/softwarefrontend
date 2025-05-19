@@ -1,350 +1,326 @@
-import React, { useEffect, useState } from "react";
-import { summonUserData } from "../features/userApis";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { Card, CardTitle, CardBody, Table, Button } from "reactstrap"; // Import Spinner
+import { ppcfetch, summonUserData } from "../features/userApis";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
-import { BallTriangle } from "react-loader-spinner";
+import {
+  Container,
+  Tab,
+  Tabs,
+  Spinner,
+  Button,
+  Card,
+  Table,
+  Placeholder,
+  Pagination as BootstrapPagination,
+} from "react-bootstrap";
+
+const ROWS_PER_PAGE = 10;
+const ROWS_PER_PAGES = 20;
+const ROWS_PER_PPC_PAGE = 10;
 
 const UserData = () => {
-  const param = useParams();
-  const [data, setData] = useState();
-  const [isLoading, setIsLoading] = useState(false);
+  const { id, name } = useParams();
+  const [data, setData] = useState({ esc: [], ev: [] });
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPages, setCurrentPages] = useState(1);
-  const rowsPerPage = 10;
-  const rowsPerPages = 20;
+  const [ppcData, setPpcData] = useState([]);
+  const [ppcLoading, setPpcLoading] = useState(true);
+  const [ppcCurrentPage, setPpcCurrentPage] = useState(1);
 
-  const id = param.id;
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-CA");
-  const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "in",
-    format: [20, 20],
-  });
+  const formattedDate = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
+  const doc = useMemo(
+    () => new jsPDF({ orientation: "landscape", unit: "in", format: [20, 20] }),
+    []
+  );
 
   useEffect(() => {
     const getUserData = async () => {
-      setIsLoading(true); 
+      setLoading(true);
       try {
-        const { data } = await summonUserData(id);
-        // console.log(data);
-        if (data) {
-          const twoDaysAgoEsclations = moment().subtract(30, "days");
-
-          const filteredEscalations = data.esc?.filter(
-            (record) =>
-              record?.createdAt &&
-              moment(record.createdAt).isAfter(twoDaysAgoEsclations)
-          );
-
-          const twoDaysAgoEvaluations = moment().subtract(10, "days");
-
-          const filteredEvaluations = data.ev?.filter(
-            (record) =>
-              record?.createdAt &&
-              moment(record.createdAt).isAfter(twoDaysAgoEvaluations)
-          );
-
-          setData({
-            ...data,
-            esc: filteredEscalations,
-            ev: filteredEvaluations,
-          });
+        const { data: responseData } = await summonUserData(id);
+        if (responseData) {
+          const processedData = {
+            esc:
+              responseData.esc?.filter((r) =>
+                moment(r.createdAt).isAfter(moment().subtract(5, "days"))
+              ) || [],
+            ev:
+              responseData.ev?.filter((r) =>
+                moment(r.createdAt).isAfter(moment().subtract(5, "days"))
+              ) || [],
+          };
+          setData(processedData);
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+      } catch (err) {
+        console.error("Error loading user data", err);
       } finally {
-        setIsLoading(false); 
+        setLoading(false);
       }
     };
 
     getUserData();
   }, [id]);
 
-  const handlerExport = (e) => {
-    e.preventDefault();
-    doc.autoTable({ html: "#user-report-escalation" });
-    doc.autoTable({ html: "#user-report-evaluation" });
-    doc.save(`${param.name}_report_${formattedDate}.pdf`);
-  };
+  useEffect(() => {
+    const getPpcData = async () => {
+      setPpcLoading(true);
+      try {
+        const res = await ppcfetch(id);
+        // console.log("Fetched PPC data:", res.data); 
+  
+      
+        const userData = res?.data?.user;
+        if (Array.isArray(userData)) {
+          setPpcData(userData);
+        } else {
+          setPpcData([]);
+        }
+      } catch (err) {
+        console.error("Error fetching PPC data", err);
+        setPpcData([]);
+      } finally {
+        setPpcLoading(false);
+      }
+    };
+    getPpcData();
+  }, [id]);
+  
 
-  const totalEscalationRecords = data?.esc?.length || 0;
-  const totalEvaluationRecords = data?.ev?.length || 0;
+  const handlerExport = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (!data.ev.length && !data.esc.length) return;
 
-  const totalEscalationPages = Math.ceil(totalEscalationRecords / rowsPerPage);
-  const totalEvaluationPages = Math.ceil(totalEvaluationRecords / rowsPerPages);
-
-  const currentEscalationRecords = data?.esc?.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
+      doc.autoTable({ html: "#evaluation-table" });
+      doc.autoTable({ html: "#escalation-table" });
+      doc.save(`${name}_report_${formattedDate}.pdf`);
+    },
+    [doc, formattedDate, name, data]
   );
 
-  const currentEvaluationRecords = data?.ev?.slice(
-    (currentPages - 1) * rowsPerPages,
-    currentPages * rowsPerPages
-  );
+  const paginationData = useMemo(() => {
+    const { esc, ev } = data;
+    return {
+      esc: esc.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE),
+      ev: ev.slice((currentPages - 1) * ROWS_PER_PAGES, currentPages * ROWS_PER_PAGES),
+      escPages: Math.ceil(esc.length / ROWS_PER_PAGE),
+      evPages: Math.ceil(ev.length / ROWS_PER_PAGES),
+    };
+  }, [data, currentPage, currentPages]);
 
-  const changePage = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= totalEscalationPages) {
-      setCurrentPage(pageNumber);
+  const ppcPagination = useMemo(() => {
+    const safePpcData = Array.isArray(ppcData) ? ppcData : [];
+    const totalPages = Math.ceil(safePpcData.length / ROWS_PER_PPC_PAGE);
+    const rows = safePpcData.slice(
+      (ppcCurrentPage - 1) * ROWS_PER_PPC_PAGE,
+      ppcCurrentPage * ROWS_PER_PPC_PAGE
+    );
+    return { rows, totalPages };
+  }, [ppcData, ppcCurrentPage]);
+
+  const renderPagination = (current, total, onChange) => {
+    const pageItems = [];
+    const range = 2;
+
+    const createItem = (page) => (
+      <BootstrapPagination.Item key={page} active={page === current} onClick={() => onChange(page)}>
+        {page}
+      </BootstrapPagination.Item>
+    );
+
+    if (total <= 10) {
+      for (let i = 1; i <= total; i++) pageItems.push(createItem(i));
+    } else {
+      pageItems.push(createItem(1));
+      if (current > 4) pageItems.push(<BootstrapPagination.Ellipsis key="start-ellipsis" disabled />);
+      for (let i = current - range; i <= current + range; i++) {
+        if (i > 1 && i < total) pageItems.push(createItem(i));
+      }
+      if (current < total - 3) pageItems.push(<BootstrapPagination.Ellipsis key="end-ellipsis" disabled />);
+      pageItems.push(createItem(total));
     }
+
+    return (
+      <BootstrapPagination className="mt-3 justify-content-center flex-wrap">
+        <BootstrapPagination.Prev onClick={() => onChange(current - 1)} disabled={current === 1} />
+        {pageItems}
+        <BootstrapPagination.Next onClick={() => onChange(current + 1)} disabled={current === total} />
+      </BootstrapPagination>
+    );
   };
 
-  const changePages = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= totalEvaluationPages) {
-      setCurrentPages(pageNumber);
-    }
+  const renderTable = (type, id, columns, rows) => {
+    const longTextColumns = type === "Evaluations" ? [12] : [11, 12];
+
+    return (
+      <Card className="mt-3">
+        <Card.Header as="h5">{type}</Card.Header>
+        <Card.Body style={{ overflowX: "auto" }}>
+          <Table striped bordered hover responsive id={id}>
+            <thead>
+              <tr>{columns.map((c, i) => <th key={i}>{c}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row, idx) => (
+                <tr key={idx}>
+                  {row.map((cell, i) => (
+                    <td
+                      key={i}
+                      title={typeof cell === "string" && cell.length > 100 ? cell : undefined}
+                      style={
+                        longTextColumns.includes(i)
+                          ? {
+                              maxWidth: "200px",
+                              whiteSpace: "pre-wrap",
+                              wordWrap: "break-word",
+                              overflowY: "auto",
+                            }
+                          : {}
+                      }
+                    >
+                      {typeof cell === "string" && cell.length > 100 ? `${cell.slice(0, 100)}...` : cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+    );
   };
+
+  const evaluationColumns = [
+    "#",
+    "Email",
+    "Lead ID",
+    "Agent Name",
+    "Team Leader",
+    "Mode of Communication",
+    "Greetings",
+    "Accuracy",
+    "Building Rapport",
+    "Presenting Solutions",
+    "Call Closing",
+    "Bonus Point",
+    "Evaluation Summary",
+  ];
+
+  const escalationColumns = [
+    "#",
+    "Email",
+    "Lead ID",
+    "Evaluated by",
+    "Agent Name",
+    "Team Leader",
+    "Lead Source",
+    "User Rating",
+    "Lead Status",
+    "Escalation Severity",
+    "Issue Identification",
+    "Escalation Action",
+    "Additional Information",
+  ];
+
+  const ppcColumns = ["#", "Lead ID", "Mod", "Source", "Team Leader", "Lead Quality"];
+
+  const evaluationRows = paginationData.ev.map((val, i) => [
+    (currentPages - 1) * ROWS_PER_PAGES + i + 1,
+    val?.useremail,
+    val?.leadID,
+    val?.agentName,
+    val?.teamleader,
+    val?.mod,
+    val?.greetings,
+    val?.accuracy,
+    val?.building,
+    val?.presenting,
+    val?.closing,
+    val?.bonus,
+    val?.evaluationsummary,
+  ]);
+
+  const escalationRows = paginationData.esc.map((val, i) => [
+    (currentPage - 1) * ROWS_PER_PAGE + i + 1,
+    val?.useremail,
+    val?.leadID,
+    val?.evaluatedby,
+    val?.agentName,
+    val?.teamleader,
+    val?.leadsource,
+    val?.userrating,
+    val?.leadstatus,
+    val?.escalationseverity,
+    val?.issueidentification,
+    val?.escalationaction,
+    val?.additionalsuccessrmation,
+  ]);
+
+  const ppcRows = ppcPagination.rows.map((item, idx) => [
+    (ppcCurrentPage - 1) * ROWS_PER_PPC_PAGE + idx + 1,
+    item.userLeadId,
+    item.teamleader,
+    item.mod,
+    item.source,
+    item.leadQuality,
+  ]);
 
   return (
-    <div className="container-fluid">
-      <div className="d-flex justify-content-center my-3">
-        <Button onClick={handlerExport} color="primary">
+    <Container className="py-4">
+      <div className="d-flex justify-content-center mb-4">
+        <Button onClick={handlerExport} variant="primary">
           Export PDF
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center">
-          <div className="d-flex justify-content-center">
-            <BallTriangle
-              height={500}
-              width={500}
-              radius={5}
-              color="#4fa94d"
-              ariaLabel="ball-triangle-loading"
-              className="mx-auto"
-              wrapperStyle={{}}
-              wrapperClass=""
-              visible={true}
-            />
-          </div>
-
-          <h1>Loading data...</h1>
-        </div>
-      ) : (
+      {loading ? (
         <>
-          {totalEvaluationRecords > 0 && (
-            <div className="mb-5">
-              <Card>
-                <CardTitle tag="h6" className="p-3 border-bottom mb-0 fw-bold">
-                  Evaluations ({totalEvaluationRecords})
-                </CardTitle>
-                <CardBody>
-                  <div style={{ overflowX: "auto" }}>
-                    <Table
-                      bordered
-                      id="user-report-evaluation"
-                      className="table table-striped text-capitalize"
-                      style={{ minWidth: "900px" }}
-                    >
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Email</th>
-                          <th>Lead ID</th>
-                          <th>Agent Name</th>
-                          <th>Team Leader</th>
-                          <th>Mode of Communication</th>
-                          <th>Greetings</th>
-                          <th>Accuracy</th>
-                          <th>Building Rapport</th>
-                          <th>Presenting Solutions</th>
-                          <th>Call Closing</th>
-                          <th>Bonus Point</th>
-                          
-                          <th>Evaluation Summary</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentEvaluationRecords.map((val, index) => (
-                          <tr key={index}>
-                            <th scope="row">
-                              {(currentPages - 1) * rowsPerPages + index + 1}
-                            </th>
-                            <td>{val?.useremail}</td>
-                            <td>{val?.leadID}</td>
-                            <td>{val?.agentName}</td>
-                            <td>{val?.teamleader}</td>
-                            <td>{val?.mod}</td>
-                            <td>{val?.greetings}</td>
-                            <td>{val?.accuracy}</td>
-                            <td>{val?.building}</td>
-                            <td>{val?.presenting}</td>
-                            <td>{val?.closing}</td>
-                            <td>{val?.bonus}</td>
-                            <td>{val?.evaluationsummary}</td>
-                
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                  <Pagination
-                    currentPage={currentPages}
-                    totalPages={totalEvaluationPages}
-                    onPageChange={changePages}
-                  />
-                </CardBody>
-              </Card>
-            </div>
-          )}
-          {totalEscalationRecords > 0 && (
-            <div className="mb-5">
-              <Card>
-                <CardTitle tag="h6" className="p-3 border-bottom mb-0 fw-bold">
-                  Escalations ({totalEscalationRecords})
-                </CardTitle>
-                <CardBody>
-                  <div style={{ overflowX: "auto" }}>
-                    <Table
-                      bordered
-                      id="user-report-escalation"
-                      className="table table-striped text-capitalize"
-                      style={{ minWidth: "900px" }}
-                    >
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Email</th>
-                          <th>Lead ID</th>
-                          <th>Evaluated by</th>
-                          <th>Agent Name</th>
-                          <th>Team Leader</th>
-                          <th>Lead Source</th>
-                          <th>User Rating</th>
-                          <th>Lead Status</th>
-                          <th>Escalation Severity</th>
-                          <th>Issue Identification</th>
-                          <th>Escalation Action</th>
-                          <th>Additional Information</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentEscalationRecords.map((val, index) => (
-                          <tr key={index}>
-                            <th scope="row">
-                              {(currentPage - 1) * rowsPerPage + index + 1}
-                            </th>
-                            <td>{val?.useremail}</td>
-                            <td>{val?.leadID}</td>
-                            <td>{val?.evaluatedby}</td>
-                            <td>{val?.agentName}</td>
-                            <td>{val?.teamleader}</td>
-                            <td>{val?.leadsource}</td>
-                            <td>{val?.userrating}</td>
-                            <td>{val?.leadstatus}</td>
-                            <td>{val?.escalationseverity}</td>
-                            <td>{val?.issueidentification}</td>
-                            <td>{val?.escalationaction}</td>
-                            <td>{val?.additionalsuccessrmation}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalEscalationPages}
-                    onPageChange={changePage}
-                  />
-                </CardBody>
-              </Card>
-            </div>
-          )}
+          <PlaceholderSection title="Loading Evaluations..." />
+          <PlaceholderSection title="Loading Escalations..." />
         </>
-      )}
-    </div>
-  );
-};
-
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const getVisiblePages = () => {
-    const visiblePages = [];
-    const windowSize = 2;
-    
-    let start = Math.max(1, currentPage - windowSize);
-    let end = Math.min(totalPages, currentPage + windowSize);
-
-    if (currentPage <= windowSize + 1) {
-      end = Math.min(2 * windowSize + 1, totalPages);
-    }
-    if (currentPage >= totalPages - windowSize) {
-      start = Math.max(1, totalPages - 2 * windowSize);
-    }
-
-    if (start > 1) {
-      visiblePages.push(1);
-      if (start > 2) {
-        visiblePages.push('...');
-      }
-    }
-
-    for (let i = start; i <= end; i++) {
-      visiblePages.push(i);
-    }
-
-    if (end < totalPages) {
-      if (end < totalPages - 1) {
-        visiblePages.push('...');
-      }
-      visiblePages.push(totalPages);
-    }
-
-    return visiblePages;
-  };
-
-  const visiblePages = getVisiblePages();
-
-  return (
-    <nav aria-label="Page navigation">
-      <ul className="pagination justify-content-center flex-wrap">
-        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-          <button
-            className="page-link"
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            aria-label="Previous"
-          >
-            &laquo; Previous
-          </button>
-        </li>
-        
-        {visiblePages.map((page, index) => (
-          <li 
-            key={index}
-            className={`page-item ${page === '...' ? 'disabled' : ''} ${currentPage === page ? 'active' : ''}`}
-          >
-            {page === '...' ? (
-              <span className="page-link">...</span>
+      ) : (
+        <Tabs defaultActiveKey="evaluations" className="mb-3">
+          <Tab eventKey="evaluations" title={`Evaluations (${data.ev.length})`}>
+            {renderTable("Evaluations", "evaluation-table", evaluationColumns, evaluationRows)}
+            {renderPagination(currentPages, paginationData.evPages, setCurrentPages)}
+          </Tab>
+          <Tab eventKey="escalations" title={`Escalations (${data.esc.length})`}>
+            {renderTable("Escalations", "escalation-table", escalationColumns, escalationRows)}
+            {renderPagination(currentPage, paginationData.escPages, setCurrentPage)}
+          </Tab>
+          <Tab eventKey="ppc" title={`PPC (${ppcData.length})`}>
+            {ppcLoading ? (
+              <PlaceholderSection title="Loading PPC..." />
             ) : (
-              <button 
-                className="page-link" 
-                onClick={() => onPageChange(page)}
-                aria-current={currentPage === page ? 'page' : undefined}
-              >
-                {page}
-              </button>
+              <>
+                {renderTable("PPC", "ppc-table", ppcColumns, ppcRows)}
+                {renderPagination(ppcCurrentPage, ppcPagination.totalPages, setPpcCurrentPage)}
+              </>
             )}
-          </li>
-        ))}
-        
-        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-          <button
-            className="page-link"
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            aria-label="Next"
-          >
-            Next &raquo;
-          </button>
-        </li>
-      </ul>
-    </nav>
+          </Tab>
+        </Tabs>
+      )}
+    </Container>
   );
 };
+
+const PlaceholderSection = ({ title }) => (
+  <Card className="mb-4">
+    <Card.Header as="h5">{title}</Card.Header>
+    <Card.Body>
+      <Placeholder animation="glow">
+        <Placeholder xs={12} />
+        <Placeholder xs={10} />
+        <Placeholder xs={8} />
+      </Placeholder>
+      <div className="d-flex justify-content-center mt-3">
+        <Spinner animation="border" variant="primary" />
+      </div>
+    </Card.Body>
+  </Card>
+);
 
 export default UserData;
