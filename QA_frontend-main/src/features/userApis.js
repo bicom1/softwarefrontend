@@ -50,15 +50,30 @@ export const evaluationApi = async (data) => {
 };
 
 
-export const ppcApi = async (data) => {
+export const createmarketing = async (data) => {
   let token = cookie.get("bictoken");
-  const res = await axios.post(`${baseUrl}/createppc`, data, {
+  const res = await axios.post(`${baseUrl}/createmarketing`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
   return res;
 };
+
+export const fetchmarketingApi = async (id) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.get(
+    `${baseUrl}/fetch-marketing/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return res;
+};
+
+
 
 export const summonUserData = async (id) => {
   let token = cookie.get("bictoken");

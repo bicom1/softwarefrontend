@@ -1,24 +1,24 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import { ppcfetch, summonUserData } from "../features/userApis";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
-import moment from "moment";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Container,
+  Table,
   Tab,
   Tabs,
-  Spinner,
   Button,
   Card,
-  Table,
+  Spinner,
   Placeholder,
   Pagination as BootstrapPagination,
 } from "react-bootstrap";
+import { useParams } from "react-router-dom";
+import jsPDF from "jspdf";
+
+import moment from "moment";
+import { summonUserData, fetchmarketingApi } from "../features/userApis";
 
 const ROWS_PER_PAGE = 10;
 const ROWS_PER_PAGES = 20;
-const ROWS_PER_PPC_PAGE = 10;
+const ROWS_PER_MARKETING_PAGE = 10;
 
 const UserData = () => {
   const { id, name } = useParams();
@@ -26,15 +26,12 @@ const UserData = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPages, setCurrentPages] = useState(1);
-  const [ppcData, setPpcData] = useState([]);
-  const [ppcLoading, setPpcLoading] = useState(true);
-  const [ppcCurrentPage, setPpcCurrentPage] = useState(1);
+  const [marketingData, setMarketingData] = useState([]);
+  const [marketingLoading, setMarketingLoading] = useState(true);
+  const [marketingCurrentPage, setMarketingCurrentPage] = useState(1);
 
   const formattedDate = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
-  const doc = useMemo(
-    () => new jsPDF({ orientation: "landscape", unit: "in", format: [20, 20] }),
-    []
-  );
+  const doc = useMemo(() => new jsPDF({ orientation: "landscape", unit: "in", format: [20, 20] }), []);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -43,14 +40,8 @@ const UserData = () => {
         const { data: responseData } = await summonUserData(id);
         if (responseData) {
           const processedData = {
-            esc:
-              responseData.esc?.filter((r) =>
-                moment(r.createdAt).isAfter(moment().subtract(5, "days"))
-              ) || [],
-            ev:
-              responseData.ev?.filter((r) =>
-                moment(r.createdAt).isAfter(moment().subtract(5, "days"))
-              ) || [],
+            esc: responseData.esc?.filter((r) => moment(r.createdAt).isAfter(moment().subtract(5, "days"))) || [],
+            ev: responseData.ev?.filter((r) => moment(r.createdAt).isAfter(moment().subtract(5, "days"))) || [],
           };
           setData(processedData);
         }
@@ -60,32 +51,25 @@ const UserData = () => {
         setLoading(false);
       }
     };
-
     getUserData();
   }, [id]);
 
   useEffect(() => {
-    const getPpcData = async () => {
-      setPpcLoading(true);
+    const getMarketingData = async () => {
+      setMarketingLoading(true);
       try {
-        const res = await ppcfetch(id);
-        // console.log("Fetched PPC data:", res.data); 
-  
-      
-        const userData = res?.data?.user;
-        if (Array.isArray(userData)) {
-          setPpcData(userData);
-        } else {
-          setPpcData([]);
-        }
+        const res = await fetchmarketingApi(id);
+        console.log("Marketing API response:", res);
+        const marketingData = res?.data?.marketingData;  
+        setMarketingData(Array.isArray(marketingData) ? marketingData : []);
       } catch (err) {
-        console.error("Error fetching PPC data", err);
-        setPpcData([]);
+        console.error("Error fetching marketing data", err);
+        setMarketingData([]);
       } finally {
-        setPpcLoading(false);
+        setMarketingLoading(false);
       }
     };
-    getPpcData();
+    getMarketingData();
   }, [id]);
   
 
@@ -93,7 +77,6 @@ const UserData = () => {
     (e) => {
       e.preventDefault();
       if (!data.ev.length && !data.esc.length) return;
-
       doc.autoTable({ html: "#evaluation-table" });
       doc.autoTable({ html: "#escalation-table" });
       doc.save(`${name}_report_${formattedDate}.pdf`);
@@ -111,20 +94,19 @@ const UserData = () => {
     };
   }, [data, currentPage, currentPages]);
 
-  const ppcPagination = useMemo(() => {
-    const safePpcData = Array.isArray(ppcData) ? ppcData : [];
-    const totalPages = Math.ceil(safePpcData.length / ROWS_PER_PPC_PAGE);
-    const rows = safePpcData.slice(
-      (ppcCurrentPage - 1) * ROWS_PER_PPC_PAGE,
-      ppcCurrentPage * ROWS_PER_PPC_PAGE
+  const marketingPagination = useMemo(() => {
+    const safeData = Array.isArray(marketingData) ? marketingData : [];
+    const totalPages = Math.ceil(safeData.length / ROWS_PER_MARKETING_PAGE);
+    const rows = safeData.slice(
+      (marketingCurrentPage - 1) * ROWS_PER_MARKETING_PAGE,
+      marketingCurrentPage * ROWS_PER_MARKETING_PAGE
     );
     return { rows, totalPages };
-  }, [ppcData, ppcCurrentPage]);
+  }, [marketingData, marketingCurrentPage]);
 
   const renderPagination = (current, total, onChange) => {
     const pageItems = [];
     const range = 2;
-
     const createItem = (page) => (
       <BootstrapPagination.Item key={page} active={page === current} onClick={() => onChange(page)}>
         {page}
@@ -154,7 +136,6 @@ const UserData = () => {
 
   const renderTable = (type, id, columns, rows) => {
     const longTextColumns = type === "Evaluations" ? [12] : [11, 12];
-
     return (
       <Card className="mt-3">
         <Card.Header as="h5">{type}</Card.Header>
@@ -172,12 +153,7 @@ const UserData = () => {
                       title={typeof cell === "string" && cell.length > 100 ? cell : undefined}
                       style={
                         longTextColumns.includes(i)
-                          ? {
-                              maxWidth: "200px",
-                              whiteSpace: "pre-wrap",
-                              wordWrap: "break-word",
-                              overflowY: "auto",
-                            }
+                          ? { maxWidth: "200px", whiteSpace: "pre-wrap", wordWrap: "break-word", overflowY: "auto" }
                           : {}
                       }
                     >
@@ -194,86 +170,39 @@ const UserData = () => {
   };
 
   const evaluationColumns = [
-    "#",
-    "Email",
-    "Lead ID",
-    "Agent Name",
-    "Team Leader",
-    "Mode of Communication",
-    "Greetings",
-    "Accuracy",
-    "Building Rapport",
-    "Presenting Solutions",
-    "Call Closing",
-    "Bonus Point",
-    "Evaluation Summary",
+    "#", "Email", "Lead ID", "Agent Name", "Team Leader", "Mode of Communication",
+    "Greetings", "Accuracy", "Building Rapport", "Presenting Solutions", "Call Closing", "Bonus Point", "Evaluation Summary"
   ];
 
   const escalationColumns = [
-    "#",
-    "Email",
-    "Lead ID",
-    "Evaluated by",
-    "Agent Name",
-    "Team Leader",
-    "Lead Source",
-    "User Rating",
-    "Lead Status",
-    "Escalation Severity",
-    "Issue Identification",
-    "Escalation Action",
-    "Additional Information",
+    "#", "Email", "Lead ID", "Evaluated by", "Agent Name", "Team Leader", "Lead Source",
+    "User Rating", "Lead Status", "Escalation Severity", "Issue Identification", "Escalation Action", "Additional Information"
   ];
 
-  const ppcColumns = ["#", "Lead ID", "Mod", "Source", "Team Leader", "Lead Quality"];
+  const marketingColumns = ["#", "Lead ID", "Team Leader", "Branch", "Source", "Lead Quality"];
 
   const evaluationRows = paginationData.ev.map((val, i) => [
     (currentPages - 1) * ROWS_PER_PAGES + i + 1,
-    val?.useremail,
-    val?.leadID,
-    val?.agentName,
-    val?.teamleader,
-    val?.mod,
-    val?.greetings,
-    val?.accuracy,
-    val?.building,
-    val?.presenting,
-    val?.closing,
-    val?.bonus,
-    val?.evaluationsummary,
+    val?.useremail, val?.leadID, val?.agentName, val?.teamleader, val?.mod,
+    val?.greetings, val?.accuracy, val?.building, val?.presenting, val?.closing, val?.bonus, val?.evaluationsummary,
   ]);
 
   const escalationRows = paginationData.esc.map((val, i) => [
     (currentPage - 1) * ROWS_PER_PAGE + i + 1,
-    val?.useremail,
-    val?.leadID,
-    val?.evaluatedby,
-    val?.agentName,
-    val?.teamleader,
-    val?.leadsource,
-    val?.userrating,
-    val?.leadstatus,
-    val?.escalationseverity,
-    val?.issueidentification,
-    val?.escalationaction,
-    val?.additionalsuccessrmation,
+    val?.useremail, val?.leadID, val?.evaluatedby, val?.agentName, val?.teamleader,
+    val?.leadsource, val?.userrating, val?.leadstatus, val?.escalationseverity,
+    val?.issueidentification, val?.escalationaction, val?.additionalsuccessrmation,
   ]);
 
-  const ppcRows = ppcPagination.rows.map((item, idx) => [
-    (ppcCurrentPage - 1) * ROWS_PER_PPC_PAGE + idx + 1,
-    item.userLeadId,
-    item.teamleader,
-    item.mod,
-    item.source,
-    item.leadQuality,
+  const marketingRows = marketingPagination.rows.map((item, idx) => [
+    (marketingCurrentPage - 1) * ROWS_PER_MARKETING_PAGE + idx + 1,
+    item.leadID, item.teamleader, item.branch, item.source, item.leadQuality,
   ]);
 
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-center mb-4">
-        <Button onClick={handlerExport} variant="primary">
-          Export PDF
-        </Button>
+        <Button onClick={handlerExport} variant="primary">Export PDF</Button>
       </div>
 
       {loading ? (
@@ -291,18 +220,18 @@ const UserData = () => {
             {renderTable("Escalations", "escalation-table", escalationColumns, escalationRows)}
             {renderPagination(currentPage, paginationData.escPages, setCurrentPage)}
           </Tab>
-          <Tab eventKey="ppc" title={`PPC (${ppcData.length})`}>
-            {ppcLoading ? (
-              <PlaceholderSection title="Loading PPC..." />
+          <Tab eventKey="marketing" title={`Marketing (${marketingData.length})`}>
+            {marketingLoading ? (
+              <PlaceholderSection title="Loading Marketing..." />
             ) : (
               <>
-                {renderTable("PPC", "ppc-table", ppcColumns, ppcRows)}
-                {renderPagination(ppcCurrentPage, ppcPagination.totalPages, setPpcCurrentPage)}
+                {renderTable("Marketing", "marketing-table", marketingColumns, marketingRows)}
+                {renderPagination(marketingCurrentPage, marketingPagination.totalPages, setMarketingCurrentPage)}
               </>
             )}
           </Tab>
         </Tabs>
-      )}
+      )}  
     </Container>
   );
 };
