@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input } from 'reactstrap';
+import { Input, FormFeedback } from 'reactstrap';
 import { ppcApi } from '../features/userApis';
 import BtnLoader from './loader/BtnLoader';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 const PpcForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const initialState = {
     leadId: '',
@@ -24,30 +25,43 @@ const PpcForm = () => {
       ...prev,
       [field]: value,
     }));
+    // Clear error when field changes
+    if (errors[field]) {
+      setErrors(prev => ({...prev, [field]: ''}));
+    }
   };
 
-  const isValidForm = () => {
-    return Object.values(ppc).every((val) => val.trim() !== '');
+  const validateForm = () => {
+    const newErrors = {};
+    if (!ppc.leadId.trim()) newErrors.leadId = 'Lead ID is required';
+    if (!ppc.mod) newErrors.mod = 'Branch is required';
+    if (!ppc.source) newErrors.source = 'Source is required';
+    if (!ppc.teamleader) newErrors.teamleader = 'Team Leader is required';
+    if (!ppc.leadQuality) newErrors.leadQuality = 'Lead Quality is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+    
     setLoading(true);
-    if (!isValidForm()) {
-      toast.error('Please fill all fields!');
-      setLoading(false);
-      return;
-    }
-
     try {
       const { data } = await ppcApi(ppc);
       if (data?.success) {
-        toast.success('Successfully Created!');
+        toast.success(data.message || 'Successfully Created!');
         setPpc(initialState);
         navigate('/bi/profile');
-        window.location.reload();
       }
     } catch (error) {
-      toast.error('Submission failed!');
+      const errorMessage = error.response?.data?.message || 'Submission failed!';
+      toast.error(errorMessage);
+      
+      // Handle server-side validation errors if any
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
     } finally {
       setLoading(false);
     }
@@ -68,21 +82,22 @@ const PpcForm = () => {
   };
 
   const renderRadioGroup = (label, name, options) => (
-    <div className="bg-card-color rounded p-4">
+    <div className="bg-card-color rounded p-4 mb-3">
       <h3>{label}</h3>
       {options.map((option) => (
-        <label key={option} className="d-flex align-items-center gap-2">
+        <label key={option} className="d-flex align-items-center gap-2 my-2">
           <Input
-            className="m-2"
             type="radio"
             name={name}
             value={option}
             checked={ppc[name] === option}
             onChange={(e) => handleChange(name, e.target.value)}
+            invalid={!!errors[name]}
           />
           {option}
         </label>
       ))}
+      {errors[name] && <div className="text-danger mt-2">{errors[name]}</div>}
     </div>
   );
 
@@ -90,7 +105,7 @@ const PpcForm = () => {
     <div className="d-flex justify-content-center">
       <div className="w-50 d-flex flex-column gap-3">
         {/* Header */}
-        <div className="rounded d-flex flex-column align-items-center bg-card-color py-3">
+        <div className="rounded d-flex flex-column align-items-center bg-card-color py-3 mb-4">
           <h1 className="fw-bolder">BI COMM</h1>
           <h3 className="text-success text-center">
             Quality Control - Form Lead enquiry reference to the sales agent
@@ -98,16 +113,17 @@ const PpcForm = () => {
         </div>
 
         {/* Lead ID */}
-        <div className="rounded bg-card-color p-4">
+        <div className="rounded bg-card-color p-4 mb-3">
           <label>
             Enter Lead ID:
             <Input
               type="text"
               placeholder="Enter Lead Id"
-              required
               value={ppc.leadId}
               onChange={(e) => handleChange('leadId', e.target.value)}
+              invalid={!!errors.leadId}
             />
+            {errors.leadId && <FormFeedback>{errors.leadId}</FormFeedback>}
           </label>
         </div>
 
@@ -126,7 +142,7 @@ const PpcForm = () => {
             onClick={handleSubmit}
             disabled={loading}
           >
-            Submit {loading && <BtnLoader />}
+            {loading ? <BtnLoader /> : 'Submit'}
           </button>
         </div>
       </div>
