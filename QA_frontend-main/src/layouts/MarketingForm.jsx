@@ -19,8 +19,6 @@ const MarketingForm = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   // Get user info from cookies
@@ -94,13 +92,10 @@ const MarketingForm = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    setError(null);
-    setSuccess(false);
 
     try {
       const response = await createmarketing(formData);
       if (response.data) {
-        setSuccess(true);
         toast.success("Marketing data submitted successfully!");
         
         // Emit socket notification
@@ -111,7 +106,7 @@ const MarketingForm = () => {
           userRoom: "notification-Room",
         });
         
-        // Reset form
+        // Reset form and navigate
         setFormData({
           leadId: '',
           teamleader: '',
@@ -121,11 +116,9 @@ const MarketingForm = () => {
         });
         
         navigate("/bi/profile");
-       
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit marketing data');
-      toast.error("Failed to submit marketing data");
+      toast.error(err.response?.data?.message || 'Failed to submit marketing data');
     } finally {
       setLoading(false);
     }
