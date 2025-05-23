@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Card } from "reactstrap";
+import { Card, CardBody, Button, Spinner, Form, FormGroup, Label, Input } from "reactstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { createReportEscalations } from "../features/userApis";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import toast from "react-hot-toast";
 
 const FilterCardEscalations = () => {
@@ -16,148 +16,100 @@ const FilterCardEscalations = () => {
   const [agentName, setAgentName] = useState("");
   const [teamLeader, setTeamLeader] = useState("");
 
+  const validateDates = () => {
+    if (startDate > endDate) {
+      toast.error("Start date cannot be later than end date.");
+      return false;
+    }
+    return true;
+  };
+
+  const fetchReportData = async () => {
+    const formattedStartDate = startDate.toISOString().split("T")[0];
+    const formattedEndDate = endDate.toISOString().split("T")[0];
+    return await createReportEscalations({
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      agentName: agentName.trim(),
+      teamleader: teamLeader.trim(),
+    });
+  };
+
   const handleDownloadExcel = async () => {
+    if (!validateDates()) return;
     setLoading(true);
     try {
-      const formattedStartDate = startDate.toISOString().split("T")[0];
-      const formattedEndtDate = endDate.toISOString().split("T")[0];
-      if (new Date(formattedStartDate) > new Date(formattedEndtDate)) {
-        toast.error("Start date cannot be later then end date.");
-        setLoading(false);
-        return;
-      }
-      const response = await createReportEscalations({
-        startDate: formattedStartDate,
-        endDate: formattedEndtDate,
-        agentName: agentName ||"",
-        teamleader: teamLeader || "",
-      });
+      const response = await fetchReportData();
 
-      if (response?.status === 404) {
-        toast.error(
-          response.data.message ||
-            "No data available for the selected date range."
-        );
-        setLoading(false);
+      if (response?.status === 404 || !response?.data?.data?.length) {
+        toast.error(response.data?.message || "No data found for selected range.");
         return;
       }
 
-      if (response?.data?.success && response.data.data) {
-        const data = response.data.data;
+      const data = response.data.data.map(({ _id, owner, __v, ...rest }) => rest);
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Escalations Report");
 
-        const filteredData = data.map(({ _id, owner, __v, ...rest }) => rest);
-
-        const worksheet = XLSX.utils.json_to_sheet(filteredData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Escalations Report");
-
-        const excelBuffer = XLSX.write(workbook, {
-          bookType: "xlsx",
-          type: "array",
-        });
-
-        const blob = new Blob([excelBuffer], {
-          type: "application/octet-stream",
-        });
-        saveAs(
-          blob,
-          `Report_${formattedStartDate}_to_${formattedEndtDate}.xlsx`
-        );
-      } else {
-        toast.error("No data available for the selected date range.");
-      }
-    } catch (error) {
-      toast.error("An error occurred while fetching the report.");
+      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+      saveAs(blob, `Escalations_Report_${startDate.toISOString().split("T")[0]}_to_${endDate.toISOString().split("T")[0]}.xlsx`);
+    } catch {
+      toast.error("An error occurred while exporting Excel report.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDownloadPDF = async () => {
+    if (!validateDates()) return;
     setLoading(true);
     try {
-      const formattedStartDate = startDate.toISOString().split("T")[0];
-      const formattedEndDate = endDate.toISOString().split("T")[0];
-      if (new Date(formattedStartDate) > new Date(formattedEndDate)) {
-        toast.error("Start date cannot be later than end date.");
-        setLoading(false);
+      const response = await fetchReportData();
+
+      if (response?.status === 404 || !response?.data?.data?.length) {
+        toast.error(response.data?.message || "No data found for selected range.");
         return;
       }
 
-      const response = await createReportEscalations({
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-        agentName: agentName ||"",
-        teamleader: teamLeader || "",
+      const data = response.data.data;
+      const doc = new jsPDF("landscape", "pt", "a3");
+      doc.text("Escalations Report", 40, 40);
+      doc.text(
+        `Date Range: ${startDate.toISOString().split("T")[0]} to ${endDate.toISOString().split("T")[0]}`,
+        40,
+        60
+      );
+
+      const headers = Object.keys(data[0]).filter(
+        (key) => !["_id", "owner", "__v", "createdAt", "updatedAt"].includes(key)
+      );
+      const body = data.map((item) => headers.map((key) => item[key]));
+
+      autoTable(doc, {
+        head: [headers],
+        body,
+        startY: 100,
+        styles: { fontSize: 9, cellPadding: 4, overflow: "linebreak" },
       });
-      if (response?.status === 404) {
-        toast.error(
-          response.data.message ||
-            "No data available for the selected date range."
-        );
-        setLoading(false);
-        return;
-      }
 
-      if (response?.data?.success && response.data.data) {
-        const data = response.data.data;
-
-        const doc = new jsPDF("l", "pt", "a3");
-
-        doc.text("Evaluations Report", 20, 30);
-
-        doc.text(
-          `Date Range: ${formattedStartDate} to ${formattedEndDate}`,
-          40,
-          60
-        );
-
-        const tableData = data.map(
-          ({ _id, owner, createdAt, updatedAt, __v, ...rest }) =>
-            Object.values(rest)
-        );
-        const tableHeaders = Object.keys(data[0]).filter(
-          (key) =>
-            key !== "_id" &&
-            key !== "owner" &&
-            key !== "__v" &&
-            key !== "createdAt" &&
-            key !== "updatedAt" // Exclude createdAt and updatedAt
-        );
-
-        doc.autoTable({
-          head: [tableHeaders],
-          body: tableData,
-          startY: 100,
-          styles: {
-            cellWidth: "auto",
-            cellPadding: 5,
-            fontSize: 10,
-            fontStyle: "normal",
-            overflow: "linebreak",
-            lineHeight: 1.4,
-          },
-        });
-        doc.save(`Report_${formattedStartDate}_to_${formattedEndDate}.pdf`);
-      } else {
-        toast.error("No data available for the selected date range.");
-      }
-    } catch (error) {
-      toast.error("An error occurred while generating the report.");
+      doc.save(`Escalations_Report_${startDate.toISOString().split("T")[0]}_to_${endDate.toISOString().split("T")[0]}.pdf`);
+    } catch {
+      toast.error("An error occurred while exporting PDF report.");
     } finally {
       setLoading(false);
     }
   };
+
   return (
-    <>
-      <Card className="p-4 shadow-sm rounded">
-        <h4 className="mb-4 text-center">Generate Escalations Report</h4>
-        <p className="text-muted text-center">
-          Select a date range to download the Escalations report.
-        </p>
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label>Start Date</label>
+    <Card className="p-4 shadow rounded">
+      <CardBody>
+        <h4 className="text-center mb-3">Generate Escalations Report</h4>
+        <p className="text-center text-muted">Select filters and export as PDF or Excel.</p>
+
+        <Form className="row g-3">
+          <FormGroup className="col-md-6">
+            <Label for="startDate">Start Date</Label>
             <DatePicker
               selected={startDate}
               onChange={(date) => setStartDate(date)}
@@ -165,10 +117,11 @@ const FilterCardEscalations = () => {
               dateFormat="yyyy-MM-dd"
               maxDate={new Date()}
               placeholderText="Select start date"
+              id="startDate"
             />
-          </div>
-          <div className="col-md-6 mb-3">
-            <label>End Date</label>
+          </FormGroup>
+          <FormGroup className="col-md-6">
+            <Label for="endDate">End Date</Label>
             <DatePicker
               selected={endDate}
               onChange={(date) => setEndDate(date)}
@@ -177,69 +130,38 @@ const FilterCardEscalations = () => {
               minDate={startDate}
               maxDate={new Date()}
               placeholderText="Select end date"
+              id="endDate"
             />
-          </div>
-          <div className="col-md-6 mb-3">
-    <label>Agent Name</label>
-    <input
-      type="text"
-      value={agentName}
-      onChange={(e) => setAgentName(e.target.value)}
-      className="form-control"
-      placeholder="Enter agent name"
-    />
-  </div>
-  <div className="col-md-6 mb-3">
-    <label>Team Lead</label>
-    <input
-      type="text"
-      value={teamLeader}
-      onChange={(e) => setTeamLeader(e.target.value)}
-      className="form-control"
-      placeholder="Enter team lead name"
-    />
-  </div>
-        </div>
-        <div className="text-center">
-          <div className="d-flex gap-5">
-            <button
-              className="btn btn-primary "
-              onClick={handleDownloadPDF}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span
-                    className="spinner-border spinner-border-sm mr-2"
-                    role="status"
-                  ></span>
-                  Downloading...
-                </>
-              ) : (
-                "Export PDF"
-              )}
-            </button>
-            <button
-              className="btn btn-success  "
-              onClick={handleDownloadExcel}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span
-                    className="spinner-border spinner-border-sm mr-2"
-                    role="status"
-                  ></span>
-                  Downloading...
-                </>
-              ) : (
-                "Export CSV"
-              )}
-            </button>
-          </div>
-        </div>
-      </Card>
-    </>
+          </FormGroup>
+          <FormGroup className="col-md-6">
+            <Label for="agentName">Agent Name</Label>
+            <Input
+              type="text"
+              id="agentName"
+              value={agentName}
+              onChange={(e) => setAgentName(e.target.value)}
+              placeholder="Enter agent name"
+            />
+          </FormGroup>
+          <FormGroup className="col-md-6">
+            <Label for="teamLeader">Team Lead</Label>
+            <Input
+              type="text"
+              id="teamLeader"
+              value={teamLeader}
+              onChange={(e) => setTeamLeader(e.target.value)}
+              placeholder="Enter team lead name"
+            />
+          </FormGroup>
+        </Form>
+      </CardBody>
+      <Button color="primary" onClick={handleDownloadPDF} disabled={loading}>
+            {loading ? <><Spinner size="sm" className="me-2" />Downloading...</> : "Export PDF"}
+          </Button>
+          <Button className="mt-4" color="success" onClick={handleDownloadExcel} disabled={loading}>
+            {loading ? <><Spinner size="sm" className="me-2" />Downloading...</> : "Export Excel"}
+          </Button>
+    </Card>
   );
 };
 

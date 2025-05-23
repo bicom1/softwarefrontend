@@ -241,6 +241,26 @@ export const createReportEvaluations = async ({ startDate, endDate, agentName,te
   }
 };
 
+export const createReportMarketing = async ({ startDate, endDate, branch,teamleader }) => {
+  let token = cookie.get("bictoken");
+  try {
+    const res = await axios.get(
+      `${baseUrl}/getcalendarfilterdatamarketing?startDate=${startDate}&endDate=${endDate}&branch=${branch}&teamleader=${teamleader}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    if (error.response) {
+      return error.response;
+    }
+    throw error;
+  }
+};
+
 export const createteamLeaders = async (data) => {
   let token = cookie.get("bictoken");
   const res = await axios.post(`${baseUrl}/createteamLeaders`, data, {
