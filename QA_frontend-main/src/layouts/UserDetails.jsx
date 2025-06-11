@@ -41,7 +41,7 @@ const UserDetails = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, CACHE_KEY]);
 
   useEffect(() => {
     getUser();
