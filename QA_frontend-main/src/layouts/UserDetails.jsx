@@ -3,20 +3,36 @@ import ReactApexChart from "react-apexcharts";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchuserbyid } from "../features/userApis";
 import { Button } from "reactstrap";
-import Loader from "./loader/Loader";
+
+
+const SkeletonBox = ({ height = 200 }) => (
+  <div style={{ background: "#e0e0e0", borderRadius: "8px", height, width: "100%" }} />
+);
 
 const UserDetails = () => {
-  const param = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [userDetails, setUserDetails] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [userDetails, setUserDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getUser = useCallback(async () => {
+  const CACHE_KEY = `userDetails_${id}`;
+
+  const getUser = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     try {
-      const { data } = await fetchuserbyid(param.id);
+      if (!forceRefresh) {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          setUserDetails(JSON.parse(cachedData));
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const { data } = await fetchuserbyid(id);
       if (data.success) {
         setUserDetails(data);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
       } else {
         console.error("Error fetching user data:", data.message);
       }
@@ -25,143 +41,114 @@ const UserDetails = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [param.id]);
+  }, [id]);
 
   useEffect(() => {
     getUser();
   }, [getUser]);
 
-  const [options, setOptions] = useState({
-    series: [{
-      name: "Ratings",
-    }],
-    options: {
-      chart: {
-        height: 350,
-        type: "line",
-        zoom: {
-          enabled: true,
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      stroke: {
-        curve: "straight",
-      },
-      title: {
-        text: "Evaluated User Ratings",
-        align: "left",
-      },
-      grid: {
-        row: {
-          colors: ["#f3f3f3", "transparent"],
-          opacity: 0.5,
-        },
-      },
-      xaxis: {
-        labels: {
-          show: false,
-        },
-      },
-    },
-  });
-
-  const [userGraph] = useState({
-    series: [
-      Number(userDetails?.counts?.good),
-      Number(userDetails?.counts?.average),
-      Number(userDetails?.counts?.bad),
-    ],
-    options: {
-      chart: {
-        height: 350,
-        type: "radialBar",
-      },
-      plotOptions: {
-        radialBar: {
-          dataLabels: {
-            name: {
-              fontSize: "22px",
-            },
-            value: {
-              fontSize: "16px",
-            },
-            total: {
-              show: true,
-              label: "Total",
-              formatter: function (w) {
-                return Number(userDetails?.counts?.total);
-              },
-            },
-          },
-        },
-      },
-      labels: ["Good", "Average", "Bad"],
-    },
-  });
+  const [graphOptions, setGraphOptions] = useState(null);
+  const [userGraph, setUserGraph] = useState(null);
 
   useEffect(() => {
     if (userDetails?.user?.evaluationRating) {
-      const userRatings = userDetails.user.evaluationRating
-        .map((rating) => Number(rating?.rating))
-        .filter((r) => !isNaN(r));
+      const setupCharts = () => {
+        const ratings = userDetails.user.evaluationRating
+          .map((r) => Number(r?.rating))
+          .filter((r) => !isNaN(r));
 
-      setOptions((pre) => ({
-        ...pre,
-        series: [{
-          data: userRatings,
-        }],
-        options: {
-          ...pre.options,
-          xaxis: {
-            ...pre.options.xaxis,
-            categories: userDetails.user.evaluationRating.map(
-              (rating, index) => `Day ${index + 1}`
-            ),
+        setGraphOptions({
+          series: [{ name: "Ratings", data: ratings }],
+          options: {
+            chart: { height: 350, type: "line", zoom: { enabled: true } },
+            dataLabels: { enabled: false },
+            stroke: { curve: "straight" },
+            title: { text: "Evaluated User Ratings", align: "left" },
+            grid: { row: { colors: ["#f3f3f3", "transparent"], opacity: 0.5 } },
+            xaxis: {
+              labels: { show: false },
+              categories: userDetails.user.evaluationRating.map((_, i) => `Day ${i + 1}`),
+            },
           },
-        },
-      }));
+        });
+
+        setUserGraph({
+          series: [
+            Number(userDetails.counts?.good || 0),
+            Number(userDetails.counts?.average || 0),
+            Number(userDetails.counts?.bad || 0),
+          ],
+          options: {
+            chart: { height: 350, type: "radialBar" },
+            plotOptions: {
+              radialBar: {
+                dataLabels: {
+                  name: { fontSize: "22px" },
+                  value: { fontSize: "16px" },
+                  total: {
+                    show: true,
+                    label: "Total",
+                    formatter: () => Number(userDetails.counts?.total || 0),
+                  },
+                },
+              },
+            },
+            labels: ["Good", "Average", "Bad"],
+          },
+        });
+      };
+
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(setupCharts);
+      } else {
+        setTimeout(setupCharts, 100); // fallback
+      }
     }
   }, [userDetails]);
 
   const handlerViewData = (name) => {
-    navigate(`/bi/data/${param.id}/${name}`);
+    navigate(`/bi/data/${id}/${name}`);
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-      }}
-      className="d-flex container flex-column gap-5"
-    >
+    <div className="d-flex container flex-column gap-4" style={{ width: "100%" }}>
       {isLoading ? (
-        <div>
-          <Loader />
-        </div>
+        <>
+          <SkeletonBox height={60} />
+          <SkeletonBox height={350} />
+          <SkeletonBox height={350} />
+        </>
       ) : (
         <>
           <div className="d-flex justify-content-center gap-3">
-            <Button onClick={() => handlerViewData(userDetails?.user?.name)}>
-              View All Data
-            </Button>
+            <Button onClick={() => handlerViewData(userDetails?.user?.name)}>View All Data</Button>
+            <Button color="primary" onClick={() => getUser(true)}>Refresh</Button>
           </div>
-          <div className="rounded" style={{ backgroundColor: "#fff" }}>
-            <ReactApexChart
-              options={userGraph?.options}
-              series={userGraph?.series}
-              type="radialBar"
-              height={350}
-            />
-          </div>
+
+          {userGraph ? (
+            <div className="rounded" style={{ backgroundColor: "#fff" }}>
+              <ReactApexChart
+                options={userGraph.options}
+                series={userGraph.series}
+                type="radialBar"
+                height={350}
+              />
+            </div>
+          ) : (
+            <SkeletonBox height={350} />
+          )}
+
           <div className="rounded p-3" style={{ backgroundColor: "#fff" }}>
-            <ReactApexChart
-              options={options?.options}
-              series={options?.series}
-              type="area"
-              height={350}
-            />
+            {graphOptions ? (
+              <ReactApexChart
+                options={graphOptions.options}
+                series={graphOptions.series}
+                type="area"
+                height={350}
+              />
+            ) : (
+              <SkeletonBox height={350} />
+            )}
           </div>
         </>
       )}
