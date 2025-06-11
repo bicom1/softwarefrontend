@@ -59,11 +59,11 @@ const UserData = () => {
       setMarketingLoading(true);
       try {
         const res = await fetchmarketingApi(id);
-        console.log("Marketing API response:", res);
+        // console.log("Marketing API response:", res);
         const marketingData = res?.data?.marketingData;  
         setMarketingData(Array.isArray(marketingData) ? marketingData : []);
       } catch (err) {
-        console.error("Error fetching marketing data", err);
+        // console.error("Error fetching marketing data", err);
         setMarketingData([]);
       } finally {
         setMarketingLoading(false);

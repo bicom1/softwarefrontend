@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 
-// Initialize socket connection
+
 const socket = io(process.env.REACT_APP_SOCKET_URL);
 
 const MarketingForm = () => {
@@ -21,10 +21,10 @@ const MarketingForm = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Get user info from cookies
+
   const getUser = cookie.get('user') ? JSON.parse(cookie.get('user')) : { name: 'Unknown' };
 
-  // Define radio options for each field
+  
   const radioOptions = {
     teamleader: [
       { value: 'umer', label: 'Umer' },
@@ -56,10 +56,10 @@ const MarketingForm = () => {
   };
 
   useEffect(() => {
-    // Join notification room when component mounts
+   
     socket.emit('join-room', 'notification-Room');
 
-    // Clean up on unmount
+   
     return () => {
       socket.off('join-room');
     };
@@ -98,7 +98,7 @@ const MarketingForm = () => {
       if (response.data) {
         toast.success("Marketing data submitted successfully!");
         
-        // Emit socket notification
+        
         socket.emit("sent-notification", {
           id: formData.leadId,
           username: getUser.name,
@@ -106,7 +106,7 @@ const MarketingForm = () => {
           userRoom: "notification-Room",
         });
         
-        // Reset form and navigate
+      
         setFormData({
           leadId: '',
           teamleader: '',
@@ -154,7 +154,7 @@ const MarketingForm = () => {
   return (
     <div className="d-flex justify-content-center">
       <div className="w-50 d-flex flex-column gap-3">
-        {/* Header */}
+       
         <div className="rounded d-flex flex-column align-items-center bg-card-color py-3 mb-4">
           <h1 className="fw-bolder">BI COMM</h1>
           <h3 className="text-success text-center">
@@ -162,7 +162,7 @@ const MarketingForm = () => {
           </h3>
         </div>
 
-        {/* Lead ID */}
+        
         <div className="rounded bg-card-color p-4 mb-3">
           <label className="w-100">
             Enter Lead ID:
@@ -177,13 +177,13 @@ const MarketingForm = () => {
           </label>
         </div>
 
-        {/* Radio Groups */}
+        
         {renderRadioGroup('Team Leader', 'teamleader')}
         {renderRadioGroup('Branch', 'branch')}
         {renderRadioGroup('Source', 'source')}
         {renderRadioGroup('Lead Quality', 'leadQuality')}
 
-        {/* Submit Button */}
+        
         <div className="p-4 text-center">
           <button
             type="button"
