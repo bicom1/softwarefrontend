@@ -49,6 +49,18 @@ export const evaluationApi = async (data) => {
   return res;
 };
 
+export const  updateEvaluationApi = async(id)=>{
+  let token = cookie.get("bictoken");
+  const res = await axios.put(`${baseUrl}/updateEvaluation/${id}`, {
+    headers:{
+      Authorization: `Bearer ${token}`,
+    }
+  })
+  return res;
+}
+
+
+
 
 export const createmarketing = async (data) => {
   let token = cookie.get("bictoken");
