@@ -16,6 +16,7 @@ const EscalationForm = () => {
   const [leaders, setLeader] = useState([]);
   const [load, setLoad] = useState(false);
   const [fetchLatestUser, setFetchLatestUser] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [escalation, setEscalation] = useState({
     email: user?.email || "",
     leadId: "",
@@ -29,7 +30,7 @@ const EscalationForm = () => {
     escAction: "",
     successmaration: "",
     userrating: "",
-    audio: null,
+    // audio: null,
   });
 
   const handlerEscalation = (name, value) => {
@@ -114,7 +115,8 @@ const EscalationForm = () => {
           escAction: "",
           successmaration: "",
           userrating: "",
-          audio: null,
+          // audio: null,
+          otherIssue: '',
         });
         // alert("Successfully Created!");
         toast.success("Successfully Created! ");
@@ -336,6 +338,51 @@ const EscalationForm = () => {
               PPC
             </label>{" "}
             <br />
+            <label>
+              <Input
+                className="m-2"
+                type="radio"
+                id="social"
+                name="account"
+                value="Tiktok"
+                checked={escalation.leadSource === "Tiktok"}
+                onChange={(e) =>
+                  handlerEscalation("leadSource", e.target.value)
+                }
+              />
+              TikTok
+            </label>{" "}
+            <br />
+            <label>
+              <Input
+                className="m-2"
+                type="radio"
+                id="social"
+                name="account"
+                value="Snapchat"
+                checked={escalation.leadSource === "Snapchat"}
+                onChange={(e) =>
+                  handlerEscalation("leadSource", e.target.value)
+                }
+              />
+              Snapchat
+            </label>{" "}
+            <br />
+            <label>
+              <Input
+                className="m-2"
+                type="radio"
+                id="social"
+                name="account"
+                value="SEO"
+                checked={escalation.leadSource === "SEO"}
+                onChange={(e) =>
+                  handlerEscalation("leadSource", e.target.value)
+                }
+              />
+              SEO
+            </label>{" "}
+            <br />
           </div>
         </div>
         {/* <div className="bg-card-color rounded d-flex justify-content-center flex-column">
@@ -470,81 +517,101 @@ const EscalationForm = () => {
             </label>
           </div>
         </div>
-        <div className="bg-card-color rounded d-flex justify-content-center flex-column ">
-          <div className="p-4">
-            <h3>Issue Identification</h3>
-            <label className="d-flex align-items-center gap-1 ">
-              <Input
-                className="m-3"
-                type="radio"
-                id="issue"
-                name="Issue"
-                value="Facebook"
-                checked={escalation.issueIden === "Facebook"}
-                onChange={(e) => handlerEscalation("issueIden", e.target.value)}
-              />
-              Product Knowledge: Sales rep lacked knowledge of product features
-              and benefits
-            </label>{" "}
-            <br />
-            <label className="d-flex align-items-center gap-1 ">
-              <Input
-                className="m-3 radioIn"
-                type="radio"
-                id="issue"
-                name="Issue"
-                value="Instagram"
-                checked={escalation.issueIden === "Instagram"}
-                onChange={(e) => handlerEscalation("issueIden", e.target.value)}
-              />
-              Sales Process: Deviation from established sales process (e.g., not
-              qualifying leads, not handling objections properly).
-            </label>{" "}
-            <br />
-            <label className="d-flex align-items-center">
-              <Input
-                className="m-3 "
-                type="radio"
-                id="issue"
-                name="Issue"
-                value="Live chat"
-                checked={escalation.issueIden === "Live chat"}
-                onChange={(e) => handlerEscalation("issueIden", e.target.value)}
-              />
-              Communication: Poor communication skills (e.g., unclear
-              explanations, unprofessional language).
-            </label>{" "}
-            <br />
-            <label className="d-flex align-items-center">
-              <Input
-                className="m-3"
-                type="radio"
-                id="issue"
-                name="Issue"
-                value="Call"
-                checked={escalation.issueIden === "Call"}
-                onChange={(e) => handlerEscalation("issueIden", e.target.value)}
-              />
-              Customer Focus: Not actively listening to customer needs,
-              aggressive sales tactics.
-            </label>{" "}
-            <br />
-            <label className="d-flex align-items-center">
-              <Input
-                className="m-3"
-                type="radio"
-                id="issue"
-                name="Issue"
-                value="WhatsApp"
-                checked={escalation.issueIden === "WhatsApp"}
-                onChange={(e) => handlerEscalation("issueIden", e.target.value)}
-              />
-              SOP's: Failing to update BITRIX or BOOKING Software in a proper
-              manner
-            </label>{" "}
-            <br />
-          </div>
-        </div>
+        <div className="bg-card-color rounded d-flex justify-content-center flex-column">
+  <div className="p-4">
+    <h3>Issue Identification</h3>
+
+    {/* Facebook */}
+    <label className="d-flex align-items-center gap-1">
+      <Input
+        className="m-3"
+        type="radio"
+        name="Issue"
+        value="Facebook"
+        checked={escalation.issueIden === "Facebook"}
+        onChange={(e) => handlerEscalation("issueIden", e.target.value)}
+      />
+      Product Knowledge: Sales rep lacked knowledge of product features and benefits
+    </label>
+
+    {/* Instagram */}
+    <label className="d-flex align-items-center gap-1">
+      <Input
+        className="m-3"
+        type="radio"
+        name="Issue"
+        value="Instagram"
+        checked={escalation.issueIden === "Instagram"}
+        onChange={(e) => handlerEscalation("issueIden", e.target.value)}
+      />
+      Sales Process: Deviation from established sales process (e.g., not qualifying leads, not handling objections properly)
+    </label>
+
+    {/* Live chat */}
+    <label className="d-flex align-items-center">
+      <Input
+        className="m-3"
+        type="radio"
+        name="Issue"
+        value="Live chat"
+        checked={escalation.issueIden === "Live chat"}
+        onChange={(e) => handlerEscalation("issueIden", e.target.value)}
+      />
+      Communication: Poor communication skills (e.g., unclear explanations, unprofessional language)
+    </label>
+
+    {/* Call */}
+    <label className="d-flex align-items-center">
+      <Input
+        className="m-3"
+        type="radio"
+        name="Issue"
+        value="Call"
+        checked={escalation.issueIden === "Call"}
+        onChange={(e) => handlerEscalation("issueIden", e.target.value)}
+      />
+      Customer Focus: Not actively listening to customer needs, aggressive sales tactics
+    </label>
+
+    {/* WhatsApp */}
+    <label className="d-flex align-items-center">
+      <Input
+        className="m-3"
+        type="radio"
+        name="Issue"
+        value="WhatsApp"
+        checked={escalation.issueIden === "WhatsApp"}
+        onChange={(e) => handlerEscalation("issueIden", e.target.value)}
+      />
+      SOP's: Failing to update BITRIX or BOOKING Software in a proper manner
+    </label>
+
+    {/* Other option */}
+    <label className="d-flex align-items-start flex-column mt-3">
+      <div className="d-flex align-items-center">
+        <Input
+          className="m-3"
+          type="radio"
+          name="Issue"
+          value="Other"
+          checked={escalation.issueIden === "Other"}
+          onChange={(e) => handlerEscalation("issueIden", e.target.value)}
+        />
+        <span>Other</span>
+      </div>
+
+      {escalation.issueIden === "Other" && (
+        <Input
+          type="text"
+          className="ms-5 mt-1 w-75"
+          placeholder="Please specify the issue..."
+          value={escalation.otherIssue || ""}
+          onChange={(e) => handlerEscalation("otherIssue", e.target.value)}
+        />
+      )}
+    </label>
+  </div>
+</div>
         <div className="bg-card-color rounded d-flex justify-content-center flex-column">
           <div className="p-4">
             <h3>Escalation Action</h3>
@@ -631,19 +698,31 @@ const EscalationForm = () => {
             </label>
           </div>
         </div>
-        <div class="input-group px-4">
-          <h5>Attach relevant recording (call) or transcript (chat).</h5>
-          <label>
-            <input
-              type="file"
-              accept="audio/*"
-              name="agentaudio"
-              class="form-control"
-              id="inputGroupFile02"
-              onChange={(e) => handlerEscalation("audio", e.target.files[0])}
-            />
-          </label>
-        </div>
+        <div className="input-group px-4">
+  <h5>Attach relevant recording (call), transcript (chat), or file (image, PDF, doc).</h5>
+  <input
+    type="file"
+    accept="audio/*,image/*,application/pdf,.doc,.docx,.txt"
+    name="agentaudio"
+    className="form-control"
+    id="inputGroupFile02"
+    multiple
+    onChange={(e) => {
+      const newFiles = Array.from(e.target.files);
+
+      // Prevent duplicates
+      const updatedFiles = [...selectedFiles];
+      newFiles.forEach(file => {
+        if (!updatedFiles.some(f => f.name === file.name && f.lastModified === file.lastModified)) {
+          updatedFiles.push(file);
+        }
+      });
+
+      setSelectedFiles(updatedFiles);
+      handlerEscalation("audio", updatedFiles);
+    }}
+  />
+</div>
         <div className="p-4">
           <button
             type="button"

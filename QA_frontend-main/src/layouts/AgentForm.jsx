@@ -29,6 +29,9 @@ const AgentForm = () => {
     leadId: "",
     agentName: "",
     mod: "",
+    reason: "",
+    otherreason: "",
+    responsetime:"",
     teamleader: "",
     greetings: "",
     accuracy: "",
@@ -45,6 +48,8 @@ const AgentForm = () => {
     if (!evaluation.leadId.trim()) newErrors.leadId = "Lead ID is required";
     if (!evaluation.agentName.trim()) newErrors.agentName = "Agent name is required";
     if (!evaluation.mod) newErrors.mod = "Mode is required";
+    if (!evaluation.reason) newErrors.reason = "Reason is required";
+    if (!evaluation.responsetime) newErrors.responsetime = "Response time is required";
     if (!evaluation.teamleader) newErrors.teamleader = "Team leader is required";
     if (!evaluation.greetings) newErrors.greetings = "Greetings rating is required";
     if (!evaluation.accuracy) newErrors.accuracy = "Accuracy rating is required";
@@ -130,6 +135,9 @@ const AgentForm = () => {
           leadId: "",
           agentName: "",
           mod: "",
+          reason:"",
+          otherreason:"",
+          responsetime:"",
           teamleader: "",
           greetings: "",
           accuracy: "",
@@ -310,43 +318,182 @@ const AgentForm = () => {
                       <span className="ms-2">Call</span>
                     </Label>
                   </FormGroup>
+                  <FormGroup check>
+                    <Label check>
+                      <Input
+                        type="radio"
+                        name="mod"
+                        value="Both"
+                        checked={evaluation.mod === "Both"}
+                        onChange={(e) => handlerChangeEvl("mod", e.target.value)}
+                      />
+                      <span className="ms-2">Both</span>
+                    </Label>
+                  </FormGroup>
                 </div>
                 {errors.mod && <div className="text-danger small mt-1">{errors.mod}</div>}
+              </div>
+{/* Response Time */}
+<div className="mb-4">
+                <h4 className="mb-3 border-bottom pb-2">Response Time <span className="text-danger">*</span></h4>
+                <div className="d-flex gap-4">
+                  <FormGroup check>
+                    <Label check>
+                      <Input
+                        type="radio"
+                        name="responsetime"
+                        value="With In An Hour"
+                        checked={evaluation.responsetime === "With In An Hour"}
+                        onChange={(e) => handlerChangeEvl("responsetime", e.target.value)}
+                      />
+                      <span className="ms-2">With In An Hour</span>
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check>
+                    <Label check>
+                      <Input
+                        type="radio"
+                        name="responsetime"
+                        value="Within A Day"
+                        checked={evaluation.responsetime === "Within A Day"}
+                        onChange={(e) => handlerChangeEvl("responsetime", e.target.value)}
+                      />
+                      <span className="ms-2">Within A Day</span>
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check>
+                    <Label check>
+                      <Input
+                        type="radio"
+                        name="responsetime"
+                        value="More Than One Day"
+                        checked={evaluation.responsetime === "More Than One Day"}
+                        onChange={(e) => handlerChangeEvl("responsetime", e.target.value)}
+                      />
+                      <span className="ms-2">More Than One Day</span>
+                    </Label>
+                  </FormGroup>
+                </div>
+                {errors.responsetime && <div className="text-danger small mt-1">{errors.responsetime}</div>}
               </div>
               
               {/* Evaluation Sections */}
               <div className="mb-4">
                 
                 {/* Greetings */}
-                <div className="mb-4">
-                  <h3>Greetings <span className="text-danger">*</span></h3>
-                  <p className="text-muted">Demonstrates enthusiasm and a positive tone throughout the call.</p>
-                  
-                  <CustomRadio
-                    id="greeting-positive"
-                    name="greetings"
-                    value="Uses a professional and friendly Greeting"
-                    checked={evaluation.greetings === "Uses a professional and friendly Greeting"}
-                    onChange={(e) => {
-                      handlerChangeEvl("greetings", e.target.value);
-                      setUseRate((pre) => ({ ...pre, greeting: { rateVal: 16 } }));
-                    }}
-                    label="Uses a professional and friendly greeting within the first 3 seconds, including the company name and their own name"
-                  />
-                  
-                  <CustomRadio
-                    id="greeting-negative"
-                    name="greetings"
-                    value="Not upto the mark"
-                    checked={evaluation.greetings === "Not upto the mark"}
-                    onChange={(e) => {
-                      handlerChangeEvl("greetings", e.target.value);
-                      setUseRate((pre) => ({ ...pre, greeting: { rateVal: 0 } }));
-                    }}
-                    label="Not upto the mark"
-                  />
-                  {errors.greetings && <div className="text-danger small mt-1">{errors.greetings}</div>}
-                </div>
+<div className="mb-4">
+  <h3>
+    Greetings <span className="text-danger">*</span>
+  </h3>
+  <p className="text-muted">
+    Demonstrates enthusiasm and a positive tone throughout the call.
+  </p>
+
+  <CustomRadio
+    id="greeting-positive"
+    name="greetings"
+    value="Uses a professional and friendly Greeting"
+    checked={evaluation.greetings === "Uses a professional and friendly Greeting"}
+    onChange={(e) => {
+      handlerChangeEvl("greetings", e.target.value);
+      setUseRate((pre) => ({ ...pre, greeting: { rateVal: 16 } }));
+    }}
+    label="Uses a professional and friendly greeting within the first 3 seconds, including the company name and their own name"
+  />
+
+  <CustomRadio
+    id="greeting-negative"
+    name="greetings"
+    value="Not upto the mark"
+    checked={evaluation.greetings === "Not upto the mark"}
+    onChange={(e) => {
+      handlerChangeEvl("greetings", e.target.value);
+      setUseRate((pre) => ({ ...pre, greeting: { rateVal: 0 } }));
+    }}
+    label="Not upto the mark"
+  />
+
+  {errors.greetings && (
+    <div className="text-danger small mt-1">{errors.greetings}</div>
+  )}
+</div>
+
+{/* Reason Section (conditionally rendered) */}
+{evaluation.greetings === "Not upto the mark" && (
+  <div className="mb-4">
+    <h4 className="mb-3 border-bottom pb-2">
+      Reason <span className="text-danger">*</span>
+    </h4>
+    <div className="d-flex flex-wrap gap-4">
+      <FormGroup check>
+        <Label check>
+          <Input
+            type="radio"
+            name="reason"
+            value="Irrelevant Response"
+            checked={evaluation.reason === "Irrelevant Response"}
+            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+          />
+          <span className="ms-2">Irrelevant Response</span>
+        </Label>
+      </FormGroup>
+
+      <FormGroup check>
+        <Label check>
+          <Input
+            type="radio"
+            name="reason"
+            value="No Booking Approach"
+            checked={evaluation.reason === "No Booking Approach"}
+            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+          />
+          <span className="ms-2">No Booking Approach</span>
+        </Label>
+      </FormGroup>
+
+      <FormGroup check>
+        <Label check>
+          <Input
+            type="radio"
+            name="reason"
+            value="Concern Handling"
+            checked={evaluation.reason === "Concern Handling"}
+            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+          />
+          <span className="ms-2">Concern Handling</span>
+        </Label>
+      </FormGroup>
+
+      <FormGroup check className="w-100">
+        <Label check>
+          <Input
+            type="radio"
+            name="reason"
+            value="Other"
+            checked={evaluation.reason === "Other"}
+            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+          />
+          <span className="ms-2">Other</span>
+        </Label>
+
+        {evaluation.reason === "Other" && (
+          <Input
+            type="text"
+            className="mt-2 ms-4 w-75"
+            placeholder="Please specify..."
+            value={evaluation.otherReason || ""}
+            onChange={(e) => handlerChangeEvl("othereason", e.target.value)}
+          />
+        )}
+      </FormGroup>
+    </div>
+
+    {errors.reason && (
+      <div className="text-danger small mt-1">{errors.reason}</div>
+    )}
+  </div>
+)}
+
                 
                 {/* Accuracy & Compliance */}
                 <div className="mb-4">
