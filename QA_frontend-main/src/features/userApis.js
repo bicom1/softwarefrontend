@@ -6,8 +6,8 @@ const cookie = new Cookies();
 // const baseUrl = "https://backendbic-rrrm.onrender.com";
 // const baseUrl = "https://backendbic-rrrm.onrender.com";
 
-const baseUrl = "https://backendbic-rrrm.onrender.com";
-// const baseUrl = "http://localhost:8000";
+// const baseUrl = "https://backendbic-rrrm.onrender.com";
+const baseUrl = "http://localhost:8000";
 
 export const LoginApi = async (data) => {
   const res = await axios.post(`${baseUrl}/login`, data);
@@ -48,6 +48,18 @@ export const evaluationApi = async (data) => {
   });
   return res;
 };
+
+export const  updateEvaluationApi = async(id)=>{
+  let token = cookie.get("bictoken");
+  const res = await axios.put(`${baseUrl}/updateEvaluation/${id}`, {
+    headers:{
+      Authorization: `Bearer ${token}`,
+    }
+  })
+  return res;
+}
+
+
 
 
 export const createmarketing = async (data) => {
