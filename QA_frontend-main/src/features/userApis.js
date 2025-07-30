@@ -44,16 +44,6 @@ export const escalationApi = async (data) => {
   return res;
 };
 
-export const summonUserData = async (id) => {
-  let token = cookie.get("bictoken");
-  const res = await axios.get(`${baseUrl}/get-data/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res;
-};
-
 export const evaluationApi = async (data) => {
   let token = cookie.get("bictoken");
   const res = await axios.post(`${baseUrl}/createEvaluation`, data, {
@@ -64,15 +54,66 @@ export const evaluationApi = async (data) => {
   return res;
 };
 
-export const ppcApi = async (data) => {
+export const  updateEvaluationApi = async(id)=>{
   let token = cookie.get("bictoken");
-  const res = await axios.post(`${baseUrl}/createppc`, data, {
+  const res = await axios.put(`${baseUrl}/updateEvaluation/${id}`, {
+    headers:{
+      Authorization: `Bearer ${token}`,
+    }
+  })
+  return res;
+}
+
+
+
+
+export const createmarketing = async (data) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.post(`${baseUrl}/createmarketing`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
   return res;
 };
+
+export const fetchmarketingApi = async (id) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.get(
+    `${baseUrl}/fetch-marketing/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return res;
+};
+
+
+
+export const summonUserData = async (id) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.get(`${baseUrl}/get-data/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res;
+};
+
+export const ppcfetch = async (id)=>{
+  let token = cookie.get("bictoken");
+  const res = await axios.get(`${baseUrl}/fetch-ppc/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res;
+}
+
+
+
 
 export const fetchleaders = async () => {
   let token = cookie.get("bictoken");
@@ -217,6 +258,26 @@ export const createReportEvaluations = async ({ startDate, endDate, agentName,te
   }
 };
 
+export const createReportMarketing = async ({ startDate, endDate, branch,teamleader }) => {
+  let token = cookie.get("bictoken");
+  try {
+    const res = await axios.get(
+      `${baseUrl}/getcalendarfilterdatamarketing?startDate=${startDate}&endDate=${endDate}&branch=${branch}&teamleader=${teamleader}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    if (error.response) {
+      return error.response;
+    }
+    throw error;
+  }
+};
+
 export const createteamLeaders = async (data) => {
   let token = cookie.get("bictoken");
   const res = await axios.post(`${baseUrl}/createteamLeaders`, data, {
@@ -292,6 +353,15 @@ export const getAllEvalutaions = async (payload) => {
 export const getAllEscalations = async (payload) => {
   let token = cookie.get("bictoken");
   const res = await axios.get(`${baseUrl}/fetch-escalation/${payload.id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res;
+};
+export const getAllPCC = async (payload) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.get(`${baseUrl}/fetch-pcc/${payload.id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

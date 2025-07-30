@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Navbar,
-  Collapse,
   Nav,
   NavItem,
   NavbarBrand,
@@ -40,7 +39,7 @@ const cookie = new Cookies();
 const Header = () => {
   const nav = useNavigate();
   const user = JSON.parse(localStorage.getItem("bicuserData"));
-  const [isOpen, setIsOpen] = useState(false);
+  // const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownOpenNotification, setDropdownOpenNotification] = useState(false);
   const [notification, setNotification] = useState([]);
@@ -85,9 +84,9 @@ const Header = () => {
     setCount(0);
   };
 
-  const Handletoggle = () => {
-    setIsOpen(!isOpen);
-  };
+  // const Handletoggle = () => {
+  //   setIsOpen(!isOpen);
+  // };
 
   useEffect(() => {
     socket.on("receive-notification", (data) => {

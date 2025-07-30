@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Auth from "../Auth.js";
+import MarketingForm from "../layouts/MarketingForm.jsx";
 
 const FullLayout = lazy(() => import("../layouts/FullLayout.js"));
 const Login = lazy(() => import("../layouts/Login.js"));
@@ -9,7 +10,6 @@ const AgentForm = lazy(() => import("../layouts/AgentForm.jsx"));
 const EscalationForm = lazy(() => import("../layouts/EscalationForm.jsx"));
 const UserDetails = lazy(() => import("../layouts/UserDetails.jsx"));
 const AgentReport = lazy(() => import("../layouts/AgentReport.jsx"));
-const Ppcform = lazy(() => import("../layouts/PpcForm.jsx"));
 const ViewUserAllData = lazy(() => import("../layouts/ViewUserAllData.jsx"));
 const AllEscalations = lazy(() =>
   import("../components/dashboard/AllEscalations.jsx")
@@ -49,7 +49,8 @@ const ThemeRoutes = [
         errorElement: <div>Something went wrong!</div>,
         element: (
           <Auth>
-            <Ppcform />
+            <MarketingForm/>
+            
           </Auth>
         ),
       },
