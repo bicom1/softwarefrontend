@@ -29,11 +29,11 @@ const AgentForm = () => {
     leadId: "",
     agentName: "",
     mod: "",
-    reason: "",
-    otherreason: "",
-    responsetime:"",
+    responsetime: "",
     teamleader: "",
     greetings: "",
+    greetingsReason: "",
+    greetingsOtherComment: "",
     accuracy: "",
     building: "",
     presenting: "",
@@ -48,7 +48,6 @@ const AgentForm = () => {
     if (!evaluation.leadId.trim()) newErrors.leadId = "Lead ID is required";
     if (!evaluation.agentName.trim()) newErrors.agentName = "Agent name is required";
     if (!evaluation.mod) newErrors.mod = "Mode is required";
-    if (!evaluation.reason) newErrors.reason = "Reason is required";
     if (!evaluation.responsetime) newErrors.responsetime = "Response time is required";
     if (!evaluation.teamleader) newErrors.teamleader = "Team leader is required";
     if (!evaluation.greetings) newErrors.greetings = "Greetings rating is required";
@@ -59,9 +58,20 @@ const AgentForm = () => {
     if (!evaluation.bonus) newErrors.bonus = "Bonus rating is required";
     if (!evaluation.evaluationsummary.trim()) newErrors.evaluationsummary = "Summary is required";
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    // Greetings reason validation
+     if (!evaluation.greetings) {
+    newErrors.greetings = "Greetings rating is required";
+  } else if (evaluation.greetings === "Not upto the mark") {
+    if (!evaluation.greetingsReason) {
+      newErrors.greetingsReason = "Please select a reason for poor greeting";
+    } else if (evaluation.greetingsReason === "Other" && !evaluation.greetingsOtherComment.trim()) {
+      newErrors.greetingsOtherComment = "Please specify your reason";
+    }
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handlerChangeEvl = (name, value) => {
     setEvaluation((pre) => ({
@@ -74,36 +84,12 @@ const AgentForm = () => {
     }
   };
 
-  const handlerChangeEvls = (field, value) => {
-  if (field === "reason" && value !== "Other") {
-    setEvaluation((prev) => ({
-      ...prev,
-      reason: value,
-      otherreason: "", // <-- fixed key
-    }));
-  } else {
-    setEvaluation((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }
-
-  // Clear any errors
-  if (errors[field]) {
-    setErrors(prev => ({ ...prev, [field]: undefined }));
-  }
-};
-
-
-
-
   const handlerDel = async (id) => {
     const { data } = await leaddelete(id);
     if (data.success) {
       fetchleaders();
     }
   };
-  
 
   const fetchlead = async () => {
     try {
@@ -141,55 +127,79 @@ const AgentForm = () => {
   }, [userRate]);
 
   const handlerEscForm = async () => {
-    if (!validateForm()) {
-      toast.error("Please fill all required fields correctly");
-      return;
-    }
+  if (!validateForm()) {
+    toast.error("Please fill all required fields correctly");
+    return;
+  }
 
-    setLoad(true);
-    try {
-      const getUser = JSON.parse(localStorage.getItem("bicuserData"));
-      const id = getUser.id;
-      evaluation._id = id;
-      
-      const data = await evaluationApi(evaluation);
-      if (data.data.success) {
-        setEvaluation({
-          email: user?.email || "",
-          leadId: "",
-          agentName: "",
-          mod: "",
-          reason:"",
-          otherreason:"",
-          responsetime:"",
-          teamleader: "",
-          greetings: "",
-          accuracy: "",
-          building: "",
-          presenting: "",
-          closing: "",
-          bonus: "",
-          evaluationsummary: "",
-          rating: "",
-        });
-        
-        toast.success("Evaluation submitted successfully!");
-        socket.emit("sent-notification", {
-          id: id,
-          username: getUser.name,
-          description: "submitted Evaluation form!",
-          userRoom: "notification-Room",
-        });
-        navigate("/bi/profile");
+  setLoad(true);
+  try {
+    const getUser = JSON.parse(localStorage.getItem("bicuserData"));
+    const id = getUser.id;
+
+    // Prepare greetings data for submission
+    let greetingsSubmission = [];
+  if (evaluation.greetings === "Not upto the mark") {
+    greetingsSubmission = ["Not upto the mark"]; // Always include the rating first
+    if (evaluation.greetingsReason) {
+      greetingsSubmission.push(evaluation.greetingsReason);
+      if (evaluation.greetingsReason === "Other" && evaluation.greetingsOtherComment) {
+        greetingsSubmission.push(evaluation.greetingsOtherComment);
       }
-    } catch (error) {
-      toast.error("Failed to submit evaluation");
-    } finally {
-      setLoad(false);
     }
-  };
+  } else {
+    greetingsSubmission = [evaluation.greetings];
+  }
 
-  // Custom radio button component for consistent styling
+    const submissionData = {
+      ...evaluation,
+      greetings: greetingsSubmission,
+      // Remove temporary fields that shouldn't go to the backend
+      greetingsReason: undefined,
+      greetingsOtherComment: undefined
+    };
+
+    const data = await evaluationApi(submissionData);
+    
+    if (data.data.success) {
+      // Reset form
+      setEvaluation({
+        email: user?.email || "",
+        leadId: "",
+        agentName: "",
+        mod: "",
+        responsetime: "",
+        teamleader: "",
+        greetings: "",
+        greetingsReason: "",
+        greetingsOtherComment: "",
+        accuracy: "",
+        building: "",
+        presenting: "",
+        closing: "",
+        bonus: "",
+        evaluationsummary: "",
+        rating: "",
+      });
+      
+      toast.success("Evaluation submitted successfully!");
+      socket.emit("sent-notification", {
+        id: id,
+        username: getUser.name,
+        description: "submitted Evaluation form!",
+        userRoom: "notification-Room",
+      });
+      navigate("/bi/profile");
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to submit evaluation");
+  } finally {
+    setLoad(false);
+  }
+};
+
+
+  // Custom radio button component
   const CustomRadio = ({ id, name, value, checked, onChange, label, description }) => (
     <div className="mb-3 p-3 bg-light rounded">
       <FormGroup check>
@@ -357,8 +367,9 @@ const AgentForm = () => {
                 </div>
                 {errors.mod && <div className="text-danger small mt-1">{errors.mod}</div>}
               </div>
-{/* Response Time */}
-<div className="mb-4">
+
+              {/* Response Time */}
+              <div className="mb-4">
                 <h4 className="mb-3 border-bottom pb-2">Response Time <span className="text-danger">*</span></h4>
                 <div className="d-flex gap-4">
                   <FormGroup check>
@@ -403,123 +414,107 @@ const AgentForm = () => {
               
               {/* Evaluation Sections */}
               <div className="mb-4">
-                
-                {/* Greetings */}
+                {/* Greetings Section */}
+               {/* Greetings Section */}
+{/* Greetings Section */}
 <div className="mb-4">
-  <h3>
-    Greetings <span className="text-danger">*</span>
-  </h3>
-  <p className="text-muted">
-    Demonstrates enthusiasm and a positive tone throughout the call.
-  </p>
+  <h3>Greetings <span className="text-danger">*</span></h3>
 
+  {/* Positive Option */}
   <CustomRadio
     id="greeting-positive"
     name="greetings"
     value="Uses a professional and friendly Greeting"
     checked={evaluation.greetings === "Uses a professional and friendly Greeting"}
     onChange={(e) => {
-      handlerChangeEvls("greetings", e.target.value);
-      setUseRate((pre) => ({ ...pre, greeting: { rateVal: 16 } }));
+      handlerChangeEvl("greetings", e.target.value);
+      setUseRate(prev => ({ ...prev, greeting: { rateVal: 16 } }));
+      handlerChangeEvl("greetingsReason", "");
+      handlerChangeEvl("greetingsOtherComment", "");
     }}
-    label="Uses a professional and friendly greeting within the first 3 seconds, including the company name and their own name"
+    label="Professional greeting"
   />
 
+  {/* Negative Option */}
   <CustomRadio
     id="greeting-negative"
     name="greetings"
     value="Not upto the mark"
     checked={evaluation.greetings === "Not upto the mark"}
     onChange={(e) => {
-      handlerChangeEvls("greetings", e.target.value);
-      setUseRate((pre) => ({ ...pre, greeting: { rateVal: 0 } }));
+      handlerChangeEvl("greetings", e.target.value);
+      setUseRate(prev => ({ ...prev, greeting: { rateVal: 0 } }));
     }}
-    label="Not upto the mark"
+    label="Not up to standard"
   />
 
-  {errors.greetings && (
-    <div className="text-danger small mt-1">{errors.greetings}</div>
-  )}
-</div>
+  {/* Reasons Only Appear If "Not upto the mark" is selected */}
+  {evaluation.greetings === "Not upto the mark" && (
+    <div className="mt-3 p-3 bg-light rounded">
+      <h5>Select Reason <span className="text-danger">*</span></h5>
 
-{/* Reason Section (conditionally rendered) */}
-{evaluation.greetings === "Not upto the mark" && (
-  <div className="mb-4">
-    <h4 className="mb-3 border-bottom pb-2">
-      Reason <span className="text-danger">*</span>
-    </h4>
-    <div className="d-flex flex-wrap gap-4">
+      {/* Standard Reasons */}
+      {["Irrelevant Response", "No Booking Approach", "Concern Handling"].map((reason) => (
+        <FormGroup check key={reason}>
+          <Label check>
+            <Input
+              type="radio"
+              name="greetingsReason"
+              value={reason}
+              checked={evaluation.greetingsReason === reason}
+              onChange={(e) => {
+                handlerChangeEvl("greetingsReason", e.target.value);
+                handlerChangeEvl("greetingsOtherComment", ""); // Clear other comment if a standard reason is selected
+              }}
+            />
+            <span className="ms-2">{reason}</span>
+          </Label>
+        </FormGroup>
+      ))}
+
+      {/* Other Option */}
       <FormGroup check>
         <Label check>
           <Input
             type="radio"
-            name="reason"
-            value="Irrelevant Response"
-            checked={evaluation.reason === "Irrelevant Response"}
-            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
-          />
-          <span className="ms-2">Irrelevant Response</span>
-        </Label>
-      </FormGroup>
-
-      <FormGroup check>
-        <Label check>
-          <Input
-            type="radio"
-            name="reason"
-            value="No Booking Approach"
-            checked={evaluation.reason === "No Booking Approach"}
-            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
-          />
-          <span className="ms-2">No Booking Approach</span>
-        </Label>
-      </FormGroup>
-
-      <FormGroup check>
-        <Label check>
-          <Input
-            type="radio"
-            name="reason"
-            value="Concern Handling"
-            checked={evaluation.reason === "Concern Handling"}
-            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
-          />
-          <span className="ms-2">Concern Handling</span>
-        </Label>
-      </FormGroup>
-
-      <FormGroup check className="w-100">
-        <Label check>
-          <Input
-            type="radio"
-            name="reason"
+            name="greetingsReason"
             value="Other"
-            checked={evaluation.reason === "Other"}
-            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
+            checked={evaluation.greetingsReason === "Other"}
+            onChange={(e) => handlerChangeEvl("greetingsReason", e.target.value)}
           />
           <span className="ms-2">Other</span>
         </Label>
-
-        {evaluation.reason === "Other" && (
-          <Input
-  type="text"
-  className="mt-2 ms-4 w-75"
-  placeholder="Please specify..."
-  value={evaluation.otherreason || ""}  
-  onChange={(e) => handlerChangeEvls("otherreason", e.target.value)} 
-/>
-
-        )}
       </FormGroup>
-    </div>
 
-    {errors.reason && (
-      <div className="text-danger small mt-1">{errors.reason}</div>
-    )}
+      {/* Comment for "Other" */}
+      {evaluation.greetingsReason === "Other" && (
+        <div className="mt-3">
+          <Label>Comment <span className="text-danger">*</span></Label>
+          <Input
+            type="textarea"
+            value={evaluation.greetingsOtherComment || ""}
+            onChange={(e) => handlerChangeEvl("greetingsOtherComment", e.target.value)}
+            placeholder="Enter details..."
+          />
+          {errors.greetingsOtherComment && (
+            <div className="text-danger small mt-1">{errors.greetingsOtherComment}</div>
+          )}
+        </div>
+      )}
+
+      {/* Preview: only one block shows based on reason type */}
+      {evaluation.greetingsReason && (
+  <div className="mt-2 p-2 bg-white border rounded">
+    {evaluation.greetingsReason === "Other"
+      ? `Not upto the mark: ${evaluation.greetingsOtherComment || ""}`
+      : evaluation.greetingsReason}
   </div>
 )}
 
-                
+    </div>
+  )}
+</div>
+
                 {/* Accuracy & Compliance */}
                 <div className="mb-4">
                   <h3>Accuracy & Compliance <span className="text-danger">*</span></h3>
@@ -692,15 +687,6 @@ const AgentForm = () => {
                   <FormFeedback>{errors.evaluationsummary}</FormFeedback>
                 </FormGroup>
               </div>
-              
-              {/* Rating Summary
-              <div className="mb-4 p-3 bg-light rounded">
-                <h5 className="mb-3">Rating Summary</h5>
-                <div className="d-flex justify-content-between align-items-center">
-                  <span className="fw-medium">Total Score:</span>
-                  <span className="badge bg-primary fs-5">{evaluation.rating} / 96</span>
-                </div>
-              </div> */}
               
               {/* Submit Button */}
               <div className="text-center mt-4">
