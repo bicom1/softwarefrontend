@@ -29,6 +29,9 @@ const AgentForm = () => {
     leadId: "",
     agentName: "",
     mod: "",
+    reason: "",
+    otherreason: "",
+    responsetime:"",
     teamleader: "",
     greetings: "",
     accuracy: "",
@@ -60,28 +63,6 @@ const AgentForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-<<<<<<< Updated upstream
-=======
-  const validateForm = () => {
-    const newErrors = {};
-    if (!evaluation.leadId.trim()) newErrors.leadId = "Lead ID is required";
-    if (!evaluation.agentName.trim()) newErrors.agentName = "Agent name is required";
-    if (!evaluation.mod) newErrors.mod = "Mode is required";
-    if (!evaluation.reason) newErrors.reason = "Reason is required";
-    if (!evaluation.teamleader) newErrors.teamleader = "Team leader is required";
-    if (!evaluation.greetings) newErrors.greetings = "Greetings rating is required";
-    if (!evaluation.accuracy) newErrors.accuracy = "Accuracy rating is required";
-    if (!evaluation.building) newErrors.building = "Building rating is required";
-    if (!evaluation.presenting) newErrors.presenting = "Presenting rating is required";
-    if (!evaluation.closing) newErrors.closing = "Closing rating is required";
-    if (!evaluation.bonus) newErrors.bonus = "Bonus rating is required";
-    if (!evaluation.evaluationsummary.trim()) newErrors.evaluationsummary = "Summary is required";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
->>>>>>> Stashed changes
   const handlerChangeEvl = (name, value) => {
     setEvaluation((pre) => ({
       ...pre,
@@ -178,6 +159,9 @@ const AgentForm = () => {
           leadId: "",
           agentName: "",
           mod: "",
+          reason:"",
+          otherreason:"",
+          responsetime:"",
           teamleader: "",
           greetings: "",
           accuracy: "",
@@ -229,59 +213,57 @@ const AgentForm = () => {
   );
 
   return (
-    <div className="d-flex justify-content-center">
-      <div className="w-50 bg-gray d-flex flex-column gap-3">
-        <div className="rounded d-flex justify-content-center flex-column align-items-center bg-card-color">
-          <h1 className="fw-bolder">BI COMM</h1>
-          <h3 className="text-success">Evaluation Form</h3>
-        </div>
-
-        <div className="rounded d-flex justify-content-center flex-column bg-card-color">
-          <div className="d-flex flex-start p-4">
-            <label>
-              Enter your email: <br />
-              <Input
-                type="email"
-                placeholder="Enter Your Email Here"
-                value={evaluation.email}
-                readOnly
-                // onChange={(e) => handlerChangeEvl("email", e.target.value)}
-              />
-            </label>
-          </div>
-        </div>
-        <div className="bg-card-color rounded d-flex justify-content-center flex-column">
-          <div className="d-flex flex-start p-4">
-            <label>
-              lead ID: <br />
-              <Input
-                type="text"
-                placeholder="Enter Your Lead ID Here"
-                value={evaluation.leadId}
-                onChange={(e) => handlerChangeEvl("leadId", e.target.value)}
-              />
-            </label>
-          </div>
-        </div>
-        <div className="bg-card-color rounded d-flex justify-content-center flex-column">
-          <div className="d-flex flex-start p-4">
-            <label>
-              Agent Name: <br />
-              <Input
-                type="text"
-                placeholder="Enter Agent Name Here"
-                value={evaluation.agentName}
-                onChange={(e) => handlerChangeEvl("agentName", e.target.value)}
-              />
-            </label>
-          </div>
-        </div>
-        <div className="bg-card-color rounded d-flex justify-content-center flex-column">
-          <div className="d-flex justify-content-between align-items-center mx-4">
-            <h3 className="mt-2">Team Leader</h3>
-            {user.role === "admin" && (
-              <div>
-                <LeadModel setFetchLatestUser={setFetchLatestUser} />
+    <div className="container py-4">
+      <div className="row justify-content-center">
+        <div className="col-lg-10 col-xl-8">
+          <div className="card shadow-sm mb-4">
+            <div className="card-header bg-primary text-white text-center py-3">
+              <h1 className="fw-bolder mb-0">BI COMM</h1>
+              <h3 className="mb-0">Evaluation Form</h3>
+            </div>
+            
+            <div className="card-body">
+              {/* User Info Section */}
+              <div className="mb-4">
+                <h4 className="mb-3 border-bottom pb-2">Basic Information</h4>
+                
+                <FormGroup className="mb-3">
+                  <Label for="email">Your Email</Label>
+                  <Input
+                    type="email"
+                    id="email"
+                    placeholder="Enter Your Email Here"
+                    value={evaluation.email}
+                    readOnly
+                    className="bg-light"
+                  />
+                </FormGroup>
+                
+                <FormGroup className="mb-3">
+                  <Label for="leadId">Lead ID <span className="text-danger">*</span></Label>
+                  <Input
+                    type="text"
+                    id="leadId"
+                    placeholder="Enter Lead ID Here"
+                    value={evaluation.leadId}
+                    onChange={(e) => handlerChangeEvl("leadId", e.target.value)}
+                    invalid={!!errors.leadId}
+                  />
+                  <FormFeedback>{errors.leadId}</FormFeedback>
+                </FormGroup>
+                
+                <FormGroup className="mb-3">
+                  <Label for="agentName">Agent Name <span className="text-danger">*</span></Label>
+                  <Input
+                    type="text"
+                    id="agentName"
+                    placeholder="Enter Agent Name Here"
+                    value={evaluation.agentName}
+                    onChange={(e) => handlerChangeEvl("agentName", e.target.value)}
+                    invalid={!!errors.agentName}
+                  />
+                  <FormFeedback>{errors.agentName}</FormFeedback>
+                </FormGroup>
               </div>
               
               {/* Team Leader Section */}
