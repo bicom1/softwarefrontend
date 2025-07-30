@@ -74,6 +74,29 @@ const AgentForm = () => {
     }
   };
 
+  const handlerChangeEvls = (field, value) => {
+  if (field === "reason" && value !== "Other") {
+    setEvaluation((prev) => ({
+      ...prev,
+      reason: value,
+      otherreason: "", // <-- fixed key
+    }));
+  } else {
+    setEvaluation((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  // Clear any errors
+  if (errors[field]) {
+    setErrors(prev => ({ ...prev, [field]: undefined }));
+  }
+};
+
+
+
+
   const handlerDel = async (id) => {
     const { data } = await leaddelete(id);
     if (data.success) {
@@ -396,7 +419,7 @@ const AgentForm = () => {
     value="Uses a professional and friendly Greeting"
     checked={evaluation.greetings === "Uses a professional and friendly Greeting"}
     onChange={(e) => {
-      handlerChangeEvl("greetings", e.target.value);
+      handlerChangeEvls("greetings", e.target.value);
       setUseRate((pre) => ({ ...pre, greeting: { rateVal: 16 } }));
     }}
     label="Uses a professional and friendly greeting within the first 3 seconds, including the company name and their own name"
@@ -408,7 +431,7 @@ const AgentForm = () => {
     value="Not upto the mark"
     checked={evaluation.greetings === "Not upto the mark"}
     onChange={(e) => {
-      handlerChangeEvl("greetings", e.target.value);
+      handlerChangeEvls("greetings", e.target.value);
       setUseRate((pre) => ({ ...pre, greeting: { rateVal: 0 } }));
     }}
     label="Not upto the mark"
@@ -433,7 +456,7 @@ const AgentForm = () => {
             name="reason"
             value="Irrelevant Response"
             checked={evaluation.reason === "Irrelevant Response"}
-            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
           />
           <span className="ms-2">Irrelevant Response</span>
         </Label>
@@ -446,7 +469,7 @@ const AgentForm = () => {
             name="reason"
             value="No Booking Approach"
             checked={evaluation.reason === "No Booking Approach"}
-            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
           />
           <span className="ms-2">No Booking Approach</span>
         </Label>
@@ -459,7 +482,7 @@ const AgentForm = () => {
             name="reason"
             value="Concern Handling"
             checked={evaluation.reason === "Concern Handling"}
-            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
           />
           <span className="ms-2">Concern Handling</span>
         </Label>
@@ -472,19 +495,20 @@ const AgentForm = () => {
             name="reason"
             value="Other"
             checked={evaluation.reason === "Other"}
-            onChange={(e) => handlerChangeEvl("reason", e.target.value)}
+            onChange={(e) => handlerChangeEvls("reason", e.target.value)}
           />
           <span className="ms-2">Other</span>
         </Label>
 
         {evaluation.reason === "Other" && (
           <Input
-            type="text"
-            className="mt-2 ms-4 w-75"
-            placeholder="Please specify..."
-            value={evaluation.otherReason || ""}
-            onChange={(e) => handlerChangeEvl("othereason", e.target.value)}
-          />
+  type="text"
+  className="mt-2 ms-4 w-75"
+  placeholder="Please specify..."
+  value={evaluation.otherreason || ""}  
+  onChange={(e) => handlerChangeEvls("otherreason", e.target.value)} 
+/>
+
         )}
       </FormGroup>
     </div>

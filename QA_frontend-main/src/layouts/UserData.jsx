@@ -170,7 +170,7 @@ const UserData = () => {
   };
 
   const evaluationColumns = [
-    "#", "Email", "Lead ID", "Agent Name", "Team Leader", "Mode of Communication",
+    "#", "Email", "Lead ID", "Agent Name", "Team Leader", "Mode of Communication","Response Time", 
     "Greetings", "Accuracy", "Building Rapport", "Presenting Solutions", "Call Closing", "Bonus Point", "Evaluation Summary"
   ];
 
@@ -183,7 +183,7 @@ const UserData = () => {
 
   const evaluationRows = paginationData.ev.map((val, i) => [
     (currentPages - 1) * ROWS_PER_PAGES + i + 1,
-    val?.useremail, val?.leadID, val?.agentName, val?.teamleader, val?.mod,
+    val?.useremail, val?.leadID, val?.agentName, val?.teamleader, val?.mod, val?.responsetime,
     val?.greetings, val?.accuracy, val?.building, val?.presenting, val?.closing, val?.bonus, val?.evaluationsummary,
   ]);
 
