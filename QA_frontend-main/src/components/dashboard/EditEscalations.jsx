@@ -7,7 +7,7 @@ import { editEscalationApi, fetchEscalationById, summonUserData } from "../../fe
 const EditEscalations = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState({ esc: []});
+  const [setData] = useState({ esc: []});
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ const EditEscalations = () => {
         }
       };
       getUserData();
-    }, [id]);
+    },);
 
 useEffect(() => {
   const getEscalation = async () => {

@@ -2,6 +2,8 @@ import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Auth from "../Auth.js";
 import MarketingForm from "../layouts/MarketingForm.jsx";
+import EditEvaluation from "../components/dashboard/EditEvaluation.jsx";
+import EditEscalations from "../components/dashboard/EditEscalations.jsx";
 
 const FullLayout = lazy(() => import("../layouts/FullLayout.js"));
 const Login = lazy(() => import("../layouts/Login.js"));
@@ -102,6 +104,14 @@ const ThemeRoutes = [
         path: "/bi/escalations/details",
         element: <EscalationDetails />,
       },
+      {
+        path: "/bi/edit-evaluation/:id",
+        element: <EditEvaluation />
+      },
+      {
+        path: "/bi/edit-escalations/:id",
+        element: <EditEscalations />
+      }
     ],
   },
   {

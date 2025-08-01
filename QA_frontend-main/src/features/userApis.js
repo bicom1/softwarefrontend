@@ -6,8 +6,8 @@ const cookie = new Cookies();
 // const baseUrl = "https://backendbic-rrrm.onrender.com";
 // const baseUrl = "https://backendbic-rrrm.onrender.com";
 
-const baseUrl = "https://backendbic-rrrm.onrender.com";
-// const baseUrl = "http://localhost:8000";
+// const baseUrl = "https://backendbic-rrrm.onrender.com";
+const baseUrl = "http://localhost:8000";
 
 export const LoginApi = async (data) => {
   const res = await axios.post(`${baseUrl}/login`, data);
@@ -49,15 +49,35 @@ export const evaluationApi = async (data) => {
   return res;
 };
 
-export const  updateEvaluationApi = async(id)=>{
+// export const  updateEvaluationApi = async(id)=>{
+//   let token = cookie.get("bictoken");
+//   const res = await axios.put(`${baseUrl}/updateEvaluation/${id}`, {
+//     headers:{
+//       Authorization: `Bearer ${token}`,
+//     }
+//   })
+//   return res;
+// }
+
+export const editEvaluationApi = async (id, payload) => {
   let token = cookie.get("bictoken");
-  const res = await axios.put(`${baseUrl}/updateEvaluation/${id}`, {
-    headers:{
+  const res = await axios.put(`${baseUrl}/edit-evaluation/${id}`, payload, {
+    headers: {
       Authorization: `Bearer ${token}`,
-    }
-  })
+    },
+  });
   return res;
-}
+};
+
+export const editEscalationApi = async (id, payload) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.put(`${baseUrl}/edit-escalation/${id}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res;
+};
 
 
 
@@ -363,3 +383,25 @@ export const getAllPCC = async (payload) => {
   });
   return res;
 };
+
+export const fetchEvaluationById = async (id) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.get(`${baseUrl}/evaluation/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res;
+};
+
+export const fetchEscalationById = async (id) => {
+  let token = cookie.get("bictoken");
+  const res = await axios.get(`${baseUrl}/escalation/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res;
+};
+
+
