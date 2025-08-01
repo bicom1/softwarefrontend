@@ -7,8 +7,8 @@ import moment from "moment";
 const EditEvaluation = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState({  ev: [] });
-  const [loading, setLoading] = useState(true);
+  const [setData] = useState({  ev: [] });
+  const [setLoading] = useState(true);
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
 
@@ -30,7 +30,7 @@ const EditEvaluation = () => {
         }
       };
       getUserData();
-    }, [id]);
+    }, );
 
     useEffect(() => {
   const getEvaluation = async () => {
