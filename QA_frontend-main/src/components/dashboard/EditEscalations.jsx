@@ -7,30 +7,32 @@ import { editEscalationApi, fetchEscalationById, summonUserData } from "../../fe
 const EditEscalations = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [setData] = useState({ esc: []});
+  // const [data, setData] = useState({ esc: []});
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
-   useEffect(() => {
-      const getUserData = async () => {
-        setLoading(true);
-        try {
-          const { data: responseData } = await summonUserData(id);
-          if (responseData) {
-            const processedData = {
-              esc: responseData.esc?.filter((r) => moment(r.createdAt).isAfter(moment().subtract(5, "days"))) || [],
-            };
-            setData(processedData);
-          }
-        } catch (err) {
-          console.error("Error loading user data", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      getUserData();
-    },);
+ useEffect(() => {
+  const getUserData = async () => {
+    setLoading(true);
+    try {
+      const { data: responseData } = await summonUserData(id);
+      if (responseData) {
+        const esc = responseData.esc?.filter((r) =>
+          moment(r.createdAt).isAfter(moment().subtract(5, "days"))
+        );
+        console.log("Escalations in past 5 days", esc);
+      }
+    } catch (err) {
+      console.error("Error loading user data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  getUserData();
+}, [id]);
+
+
 
 useEffect(() => {
   const getEscalation = async () => {
