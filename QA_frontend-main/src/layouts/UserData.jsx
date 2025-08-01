@@ -10,9 +10,9 @@
     Placeholder,
     Pagination as BootstrapPagination,
   } from "react-bootstrap";
-  import { useParams } from "react-router-dom";
+  import { useNavigate, useParams } from "react-router-dom";
   import jsPDF from "jspdf";
-
+  import { FaEdit } from "react-icons/fa";
   import moment from "moment";
   import { summonUserData, fetchmarketingApi } from "../features/userApis";
 
@@ -29,7 +29,7 @@
     const [marketingData, setMarketingData] = useState([]);
     const [marketingLoading, setMarketingLoading] = useState(true);
     const [marketingCurrentPage, setMarketingCurrentPage] = useState(1);
-
+    const navigate = useNavigate();
     const formattedDate = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
     const doc = useMemo(() => new jsPDF({ orientation: "landscape", unit: "in", format: [20, 20] }), []);
 
@@ -71,6 +71,14 @@
       };
       getMarketingData();
     }, [id]);
+
+    const handleEditEvaluation = (id) => {
+  navigate(`/bi/edit-evaluation/${id}`);
+};
+
+const handleEditEscalations = (id) => {
+  navigate(`/bi/edit-escalations/${id}`);
+};
     
 
     const handlerExport = useCallback(
@@ -171,15 +179,15 @@
 
     const evaluationColumns = [
       "#", "Email", "Lead ID", "Agent Name", "Team Leader", "Mode of Communication","Response Time", 
-      "Greetings", "Accuracy", "Building Rapport", "Presenting Solutions", "Call Closing", "Bonus Point", "Evaluation Summary"
+      "Greetings", "Accuracy", "Building Rapport", "Presenting Solutions", "Call Closing", "Bonus Point", "Evaluation Summary", "Edit"
     ];
 
     const escalationColumns = [
       "#", "Email", "Lead ID", "Evaluated by", "Agent Name", "Team Leader", "Lead Source",
-      "User Rating", "Lead Status", "Escalation Severity", "Issue Identification", "Escalation Action", "Additional Information"
+      "User Rating", "Lead Status", "Escalation Severity", "Issue Identification", "Escalation Action", "Additional Information", "Edit"
     ];
 
-    const marketingColumns = ["#", "Lead ID", "Team Leader", "Branch", "Source", "Lead Quality"];
+    const marketingColumns = ["#", "Lead ID", "Team Leader", "Branch", "Source", "Lead Quality", "Edit"];
 
     const evaluationRows = paginationData.ev.map((val, i) => {
       // Debug: Log the greetings array to see its structure
@@ -202,6 +210,10 @@
         val?.closing,
         val?.bonus,
         val?.evaluationsummary,
+        <FaEdit
+    style={{ cursor: "pointer", color: "#FF0000", size:"90" }}
+    onClick={() => handleEditEvaluation(val._id)}
+  />
       ];
     });
     
@@ -211,6 +223,10 @@
       val?.useremail, val?.leadID, val?.evaluatedby, val?.agentName, val?.teamleader,
       val?.leadsource, val?.userrating, val?.leadstatus, val?.escalationseverity,
       val?.issueidentification, val?.escalationaction, val?.additionalsuccessrmation,
+       <FaEdit
+    style={{ cursor: "pointer", color: "#FF0000", size:"90" }}
+    onClick={() => handleEditEscalations(val._id)}
+  />
     ]);
 
     const marketingRows = marketingPagination.rows.map((item, idx) => [
