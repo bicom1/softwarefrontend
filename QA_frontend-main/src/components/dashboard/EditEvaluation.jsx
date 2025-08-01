@@ -2,35 +2,25 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Form, Button, Container, Alert, Row, Col } from "react-bootstrap";
 import { editEvaluationApi, fetchEvaluationById, summonUserData } from "../../features/userApis";
-import moment from "moment";
 
 const EditEvaluation = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [setData] = useState({  ev: [] });
-  const [setLoading] = useState(true);
+  
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
 
    useEffect(() => {
-      const getUserData = async () => {
-        setLoading(true);
-        try {
-          const { data: responseData } = await summonUserData(id);
-          if (responseData) {
-            const processedData = {
-              ev: responseData.ev?.filter((r) => moment(r.createdAt).isAfter(moment().subtract(5, "days"))) || [],
-            };
-            setData(processedData);
-          }
-        } catch (err) {
-          console.error("Error loading user data", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      getUserData();
-    }, );
+  const getUserData = async () => {
+    try {
+      const { data: responseData } = await summonUserData(id);
+      console.log(responseData); // optional
+    } catch (err) {
+      console.error("Error loading user data", err);
+    }
+  };
+  getUserData();
+}, [id]);
 
     useEffect(() => {
   const getEvaluation = async () => {
