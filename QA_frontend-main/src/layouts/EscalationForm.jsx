@@ -31,6 +31,7 @@ const EscalationForm = () => {
     successmaration: "",
     userrating: "",
     // audio: null,
+    otherIssue: '',
   });
 
   const handlerEscalation = (name, value) => {
@@ -77,6 +78,15 @@ const EscalationForm = () => {
 
   const handlerEscForm = async () => {
     setLoad(true);
+
+    if (escalation.issueIden === "Other" && escalation.otherIssue.trim() !== "") {
+    escalation.issueIden = escalation.otherIssue.trim(); // Set actual value instead of "Other"
+  }
+  if (escalation.escAction === "Other" && otherReason.trim() !== "") {
+  escalation.escAction = otherReason.trim();
+}
+
+
     if (
       escalation.email.trim() === "" ||
       escalation.leadId.trim() === "" ||
@@ -657,26 +667,29 @@ const EscalationForm = () => {
               Manager.
             </label>{" "}
             <br />
-            <label className="d-flex align-items-center">
-              <Input
-                className="m-3"
-                type="radio"
-                id="action"
-                name="Action"
-                value="Call"
-                checked={escalation.escAction === "Call"}
-                onChange={(e) => handlerEscalation("escAction", e.target.value)}
-              />
-              Other
-            </label>
-            <textarea
-              class="form-control mt-1"
-              placeholder="Your Answer"
-              id="exampleFormControlTextarea1"
-              rows="3"
-              value={otherReason}
-              onChange={(e) => handlerOtherChange(e)}
-            ></textarea>
+            <label className="d-flex align-items-start flex-column mt-3">
+  <div className="d-flex align-items-center">
+    <Input
+      className="m-3"
+      type="radio"
+      name="Action"
+      value="Other"
+      checked={escalation.escAction === "Other"}
+      onChange={(e) => handlerEscalation("escAction", e.target.value)}
+    />
+    <span>Other</span>
+  </div>
+
+  {escalation.escAction === "Other" && (
+    <textarea
+      className="form-control mt-1 ms-5 w-75"
+      placeholder="Please specify the action..."
+      value={otherReason}
+      onChange={(e) => handlerOtherChange(e)}
+    ></textarea>
+  )}
+</label>
+
           </div>
         </div>
         <div className="bg-card-color rounded d-flex justify-content-center flex-column">
