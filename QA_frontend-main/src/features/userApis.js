@@ -6,8 +6,8 @@ const cookie = new Cookies();
 // const baseUrl = "https://backendbic-rrrm.onrender.com";
 // const baseUrl = "https://backendbic-rrrm.onrender.com";
 
-const baseUrl = "https://backendbic-rrrm.onrender.com";
-// const baseUrl = "http://localhost:8000";
+// const baseUrl = "https://backendbic-rrrm.onrender.com";
+const baseUrl = "http://localhost:8000";
 
 export const LoginApi = async (data) => {
   const res = await axios.post(`${baseUrl}/login`, data);
