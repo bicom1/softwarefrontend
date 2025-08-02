@@ -44,12 +44,13 @@ const EscalationForm = () => {
   const handlerOtherChange = (e) => {
     setOtherReason(e.target.value);
   };
-
-  useEffect(() => {
-    if (otherReason.trim() !== "") {
-      handlerEscalation("escAction", otherReason);
-    }
-  }, [otherReason]);
+  
+// Removed Issue At Escalation Action
+  // useEffect(() => {
+  //   if (otherReason.trim() !== "") {
+  //     handlerEscalation("escAction", otherReason);
+  //   }
+  // }, [otherReason]);
 
   const fetchlead = async () => {
     let data = await fetchleaders();
