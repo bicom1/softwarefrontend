@@ -6,7 +6,6 @@ import { editEvaluationApi, fetchEvaluationById, summonUserData } from "../../fe
 const EditEvaluation = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
 

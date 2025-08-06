@@ -60,7 +60,7 @@ const ProjectTables = () => {
         setLoading(false);
       }
     },
-    [deletedUserIDs, CACHE_DURATION] // Fixed: Added CACHE_DURATION to deps
+    [deletedUserIDs, CACHE_DURATION] 
   );
 
   const handleRefresh = () => {
@@ -207,7 +207,7 @@ useEffect(() => {
                   <CardTitle
                     className="text-capitalize h5"
                     onClick={() =>
-                      navigate(`/bi/userdetails/${user.id}/${user.name}`)
+                      navigate(`/bi/data/${user.id}/${user.name}`)
                     }
                   >
                     {user.name}
