@@ -117,13 +117,14 @@ useEffect(() => {
   };
 
   // Memoize filtered users for performance
-  const filteredUsers = useMemo(
-    () =>
-      userDetails.filter((user) =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [userDetails, searchTerm]
-  );
+  const filteredUsers = useMemo(() => {
+    const safeSearch = searchTerm?.toLowerCase?.() || "";
+  
+    return userDetails.filter((user) => {
+      const name = user?.name?.toLowerCase?.() || "";
+      return name.includes(safeSearch);
+    });
+  }, [userDetails, searchTerm]);
 
   return (
     <Card
